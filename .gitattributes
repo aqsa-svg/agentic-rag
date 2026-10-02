@@ -1,0 +1,9 @@
+# Normalise line endings. Without this, a Windows checkout commits CRLF, Linux CI reads
+# it back as a diff, and `ruff format --check` disagrees with what passed locally.
+* text=auto eol=lf
+
+# Cassettes and the run log are committed on purpose (see .gitignore) and must stay
+# byte-stable so re-recording produces a reviewable diff.
+data/cassettes/**/*.json text eol=lf
+data/eval_runs.jsonl     text eol=lf
+data/golden/*.jsonl      text eol=lf

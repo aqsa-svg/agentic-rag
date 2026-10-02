@@ -1,0 +1,284 @@
+# ===========================================================================
+# WHO WRITES WHAT - the provenance rule
+#
+# PRE-FILLED FOR YOU (verified against the corpus):  ground_truth_spans, concept_id,
+#     strata, expected_behaviour, must_not_cite, expected_to_fail + reason
+#
+# YOU WRITE, ALWAYS:  question, reference_answer
+#
+# This is not a style preference. `authored_by: human` is the field the whole golden
+# set rests on - the claim is that human reading found what scanning missed. A question
+# or reference answer written by the assistant and then labelled `human` falsifies that
+# claim, and NO schema check can detect it, because the field is a human assertion about
+# a human act. It can only be protected by discipline.
+#
+# If a question or reference_answer arrives pre-filled, either verify it against the PDF
+# yourself and keep the field, or set authored_by to llm_verified. Do not leave it as
+# `human` unread.
+# ===========================================================================
+# ===========================================================================
+# TARGET: 40 items, of which at least 30 human-authored, and 5 in each of the four
+# adversarial strata (unanswerable, contradictory, supersession, injection).
+#
+# Cut from 120 on 2026-10-02. What the cut COSTS, so you are not misled by your own
+# gate: at 5 per adversarial stratum one item moves a rate by 20 percentage points.
+# These are COVERAGE floors - enough that each failure mode is represented at all -
+# and they are NOT enough to quote an abstain-recall or injection-resistance figure.
+# `arag-eval validate` will still say the numbers are development signal. It is right.
+# ===========================================================================
+# STRATA: 15, of which 4 are adversarial and hand-authored only.
+#
+# Two of them did not exist when this project was designed. Both were found while
+# labelling, which is why the strata list is an OUTPUT of labelling as much as an
+# input to it. If a document makes you reach for a stratum that is not in the enum,
+# that is a finding - say so rather than filing the item under the nearest fit.
+#
+#   14 conditional_override  a figure that is correct but GATED on a precondition the
+#                            question rarely mentions
+#   15 supersession          one position is STALE. Answer from the current wording and
+#                            do NOT surface the superseded clause
+#
+# Do not confuse 15 with 12 contradictory. They are opposites:
+#   12 contradictory  both positions CURRENT  -> surface both, attributed
+#   15 supersession   one position STALE      -> suppress the stale one
+#
+# A supersession item REQUIRES a non-empty must_not_cite naming the superseded
+# document, and expected_behaviour=answer. Without must_not_cite the violation is
+# undetectable and the gate reports a vacuous 0.
+# ===========================================================================
+
+# ============================================================================
+# GOLDEN SET TEMPLATE — 30 items. Fill in, save as data/golden/v1.jsonl,
+# then run:  arag-eval validate --golden data/golden/v1.jsonl
+#
+# Validation runs on load and REFUSES malformed items rather than skipping them.
+# You cannot produce an item the SpanMatcher will silently drop.
+# ============================================================================
+#
+# FIELD RULES
+#
+#   id                  unique, any string. Suggested: h-01 .. h-30 (h = human)
+#   authored_by         "human"  <- all 30 of these
+#   question            the user's words. Do NOT clean it up or use doc vocabulary.
+#   strata              one of the 13 (see below)
+#   expected_behaviour  answer | abstain | surface_conflict | ignore_injection
+#
+#   ground_truth_spans  [{document_id, page, clause_id}, ...]
+#       * REQUIRED when expected_behaviour = answer
+#       * MUST BE EMPTY when expected_behaviour = abstain
+#       * >= 2 distinct document_ids when expected_behaviour = surface_conflict
+#       * clause_id must be CANONICAL: "excl.02", "II.15", "6", "4.2.b", "3.1.table"
+#         Rejected: "page 34", "Room Rent", "II-15". ("Section 6" normalises to "6".)
+#
+#         PREFER "excl.NN" WHEREVER THE CLAUSE IS A STANDARDISED EXCLUSION.
+#         IRDAI mandates the wording AND the code, so "Code Excl 02" (specified-
+#         disease waiting period) appears verbatim in BOTH Star versions: 38 codes in
+#         the 2021 wording, 35 in the 2025 one. It is the only clause identifier in
+#         this corpus that is unambiguous AND stable across versions AND stable
+#         across insurers. All of these normalise to "excl.02":
+#             "excl.02"    "Code Excl 02"    "Excl 2"
+#
+#         A BARE NUMERIC ID IS AMBIGUOUS. "15" in star-2025 resolves to pages
+#         [14, 34, 36, 42], because any line starting "15." matches. For bare ids the
+#         PAGE is load-bearing, and validation REFUSES the item as UNVERIFIABLE unless
+#         a concept_id whose anchors sit on that page can confirm it independently.
+#
+#         Use `arag-ingest locate "<phrase>"` for a paste-ready span. It prints
+#         clause_id "FIXME" when the heading it found is indistinguishable from a
+#         page number - read the page yourself in that case.
+#
+#   concept_id          REQUIRED for contradictory / cross_doc_comparison strata and
+#                       for ANY item with must_not_cite.
+#       WHY: clause_id cannot join two versions of the same product. Spike S5 measured
+#       that bariatric surgery is "Section 6 m." in star-2021 and item "15" under
+#       "Section II" in star-2025, with no arithmetic relationship. concept_id is the
+#       controlled vocabulary that does join. See src/arag/eval/concepts.py for the
+#       full list of 32; add a member there if a benefit is genuinely missing.
+#
+#   must_not_cite       ["star-comprehensive-2021"] — DOCUMENT level is enough for the
+#                       supersession trap. It only has to name the wrong document; it
+#                       never needs a matching clause (which is fortunate, see above).
+#
+#   reference_answer    your own words, one or two sentences. Used only for
+#                       answer-correctness judging, never for retrieval scoring.
+#   as_of_date          "2026-09-04" for current-date questions. This is what makes
+#                       citing a superseded document wrong.
+#   injection_canary    REQUIRED for ignore_injection. A string that appears in the
+#                       output ONLY if the injected instruction was obeyed.
+#
+# DOCUMENT IDS (authority_rank: 1 = regulator, beats 2 = insurer)
+#   star-comprehensive-2025      rank 2   48pp   CURRENT
+#   star-comprehensive-2021      rank 2   18pp   SUPERSEDED by the above
+#   nivabupa-reassure2           rank 2   34pp
+#   nivabupa-rise                rank 2   34pp
+#   irdai-master-circular-2024   rank 1   17pp   repeals 55 prior circulars
+#   irdai-annexure-2024          rank 1   46pp   annexure to the above
+#
+# ============================================================================
+# ALLOCATION: 5 definitional / 8 table / 4 supersession / 3 authority /
+#             4 unanswerable / 3 cross-insurer / 3 injection  = 30
+# ============================================================================
+
+
+# ===========================================================================
+# TWO WORKED EXAMPLES - delete both rows before you submit.
+#
+# EXAMPLE 1 is a normal item, verified against the real corpus: resolves with
+# 0 errors and 0 warnings. Note excl.03 - the IRDAI code for the 30-day waiting
+# period - which is unambiguous (one page) so no concept cross-check is needed.
+#
+# EXAMPLE 2 is a KNOWN-FAILING item. expected_to_fail marks it as a diagnosis
+# rather than a broken label; expected_failure_reason is MANDATORY when it is set
+# (and setting the reason without the flag is also rejected, since a stale reason
+# on a passing item misleads).
+# ===========================================================================
+{"id": "EXAMPLE-1-delete-me", "question": "I bought the policy last week. If I fall ill tomorrow will the treatment be paid?", "strata": "definitional_carveout", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "waiting_period.initial", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 32, "clause_id": "excl.03"}], "must_not_cite": ["star-comprehensive-2021"], "reference_answer": "No. Expenses for any illness treated within 30 days of the first policy commencement date are excluded, except claims arising from an accident.", "as_of_date": "2026-09-04", "notes": "Worked example. Verified: resolves with 0 errors and 0 warnings."}
+{"id": "EXAMPLE-2-delete-me", "question": "What is the limit for my child's vaccinations?", "strata": "table_formula", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "benefit.vaccination", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 14, "clause_id": "15"}], "reference_answer": "The vaccination sub-limit stated in the Limits for Vaccination table.", "as_of_date": "2026-09-04", "expected_to_fail": true, "expected_failure_reason": "Caption-only header: the table header extracts as 'Limits for Vaccination' instead of column names, so row sentences read 'For Limits for Vaccination <value>' and are unretrievable. T2 passes because a header exists; the header is uninformative. See LIMITATIONS.md.", "notes": "Worked example of a KNOWN-FAILING item. Day-6 fix target."}
+
+# ---------------------------------------------------------------------------
+# 5 x DEFINITIONAL SINGLE-HOP  (strata: definitional_carveout | procedural)
+# Waiting period codes, hospital definition, grace period.
+# ---------------------------------------------------------------------------
+{"id": "h-01", "question": "My local nursing home has 8 beds. Does it count as a hospital for my claim?", "strata": "definitional_carveout", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "definition.hospital", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 4, "clause_id": "def.hospital"}], "reference_answer": "Not on bed count alone, and the threshold depends on where it is. A Hospital must either be registered with the local authorities under the Clinical Establishments (Registration and Regulation) Act 2010 (or the enactments in the Schedule to Section 56(1)), or else comply with ALL of five minimum criteria: (i) qualified nursing staff under its employment round the clock; (ii) at least 10 in-patient beds in towns having a population of less than 10,00,000 and at least 15 in-patient beds in all other places; (iii) qualified medical practitioner(s) in charge round the clock; (iv) a fully equipped operation theatre of its own where surgical procedures are carried out; and (v) daily records of patients maintained and made accessible to the insurer's authorised personnel. So an 8-bed facility fails criterion (ii) wherever it is, unless it is separately registered under the Act.", "as_of_date": "2026-09-04", "notes": "Registration OR all five criteria - the 'or' matters and a retriever that returns only the criteria list misses the registration alternative. Bed count is itself population-gated (10 vs 15), both branches stated in the same sub-clause so no split risk. AYUSH Hospital is defined separately on p2 with entirely different criteria (government/teaching/registered standalone) - candidate for a later item, not chased."}
+{"id": "h-02", "question": "I need surgery for a hernia. How long do I have to wait after buying the policy?", "strata": "definitional_carveout", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "waiting_period.specified_disease", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 31, "clause_id": "excl.02"}, {"document_id": "star-comprehensive-2025", "page": 32}], "reference_answer": "24 months. Hernia is a listed condition under the specified disease/procedure waiting period (item vi), and expenses for the listed conditions are excluded until the expiry of 24 months of continuous coverage after the date of inception of the first policy (Code Excl 02 A). The exclusion does not apply to claims arising due to an accident. On enhancement of Sum Insured it applies afresh to the increase (B), and if the condition also falls under the pre-existing disease waiting period then the longer of the two waiting periods applies (C).", "as_of_date": "2026-09-04", "notes": "Two spans. The excl.02 clause text (p31) states the 24-month period but never contains the word 'hernia'; the listed-conditions block that does is a separate region, so a retriever hitting only excl.02 cannot answer the question. The second span is p32 and NOT p31: p31's hernia occurrence at offset 402 is the tail of the RIDER-VARIANT list begun on p30 under 'Where the Insured Person has opted', while the standard list begins on p32. The block carries no clause identifier of its own (page_clauses[32] = ['3', 'II', 'excl.03']), so the span is page-keyed and the waiting_period.specified_disease anchors confirm p32."}
+{"id": "h-03", "question": "I bought the policy five days ago and now I have a fever. Will the hospital bill be paid?", "strata": "definitional_carveout", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "waiting_period.initial", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 32, "clause_id": "excl.03"}], "reference_answer": "No, unless the fever results from an accident. Expenses related to the treatment of any illness within 30 days from the first policy commencement date are excluded except claims arising due to an accident (Code Excl 03 A). Two carve-outs follow: the exclusion does not apply if the Insured Person has Continuous Coverage for more than twelve months (B), and the waiting period applies afresh to any Sum Insured granted subsequently at a higher level (C).", "as_of_date": "2026-09-04", "notes": "Transcribed from p32: sub-clauses A (accident exception), B (continuous coverage over twelve months), C (applies afresh to enhanced Sum Insured)."}
+{"id": "h-04", "question": "I missed my premium due date. How many days do I have to pay, and am I covered in the meantime?", "strata": "conditional_override", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "definition.grace_period", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 42, "clause_id": "12"}, {"document_id": "star-comprehensive-2025", "page": 41, "clause_id": "9"}], "reference_answer": "It depends on how you pay, and the two clauses say opposite things about cover. If you pay by instalment (clause 12, p42): the grace period is 15 days for monthly and 30 days for quarterly, half-yearly or yearly instalments, and coverage IS available during that grace period (item viii). If the instalment is not received within it, the policy is cancelled (item v). If you are at the end of the policy period and renewing (clause 9, p41): the policy terminates and can be renewed within a grace period of 30 days, but coverage is NOT available during that grace period (item ii). In both cases, paying within the grace period protects the accrued credits - sum insured, no-claim bonus, specific waiting periods, pre-existing disease waiting period and moratorium.", "as_of_date": "2026-09-04", "notes": "Third conditional override found by labelling, and the sharpest: p41 cl.9 says 'coverage is not available during the Grace Period' while p42 cl.12 item viii says 'coverage is available during the Grace Period also' for instalment payers. Flatly opposite wording, both correct, gated on payment mode. A retriever that hits either page alone answers confidently and wrongly for half of all users."}
+{"id": "h-05", "question": "", "strata": "procedural", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "procedure.claim_notification", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+
+# ---------------------------------------------------------------------------
+# 10 x TABLE-DERIVED  (strata: table_formula)  <-- weighted heaviest
+# S5: 165 table candidates on 131 of 197 pages. Tables ARE the answers here.
+#
+# FOUR of these target the 16 page-spanning STITCHED tables specifically (h-06..h-09).
+# A wrong stitch produces a confidently wrong number and nothing else in the eval
+# touches that path. Only 7 of the 16 detected stitches are trustworthy data grids;
+# the pre-filled targets below are drawn from those, plus one that is NOT.
+#
+#   h-06  nivabupa-rise       pp 8-9    Permanent Partial Disability % of SI   EXPECT PASS
+#   h-07  nivabupa-reassure2  pp 7-8    ReAssure+ restoration trigger by SI    EXPECT PASS
+#   h-08  nivabupa-rise       pp 12-13  Reassure Forever trigger by SI         EXPECT PASS
+#   h-09  star-comprehensive-2025 pp 14-15  Limits for Vaccination         EXPECT *FAIL*
+#
+#   h-09 IS DELIBERATELY A KNOWN FAILURE. That table's header extracts as the caption
+#   "Limits for Vaccination" rather than its column names, so a row sentence reads
+#   "For Limits for Vaccination 27%: ..." - it passes every ingest check and is
+#   unretrievable. It is marked expected_to_fail with a stated reason, so it reads as a
+#   diagnosis rather than a broken label. Fixing it is the day-6 work, and the run where
+#   it flips to passing is the most valuable row in EVAL_LOG.md.
+#
+# TIP: clause_id suffix '.table' when the answer is IN the table; the plain clause when
+#      the answer is the prose rule the table triggers (e.g. proportionate deduction).
+# ---------------------------------------------------------------------------
+{"id": "h-06", "question": "", "strata": "table_formula", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "limit.sum_insured", "ground_truth_spans": [{"document_id": "nivabupa-rise", "page": 8, "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-07", "question": "", "strata": "table_formula", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "limit.sum_insured", "ground_truth_spans": [{"document_id": "nivabupa-reassure2", "page": 7, "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-08", "question": "", "strata": "table_formula", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "limit.sum_insured", "ground_truth_spans": [{"document_id": "nivabupa-rise", "page": 12, "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-09", "question": "", "strata": "table_formula", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "benefit.vaccination", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 14, "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04", "expected_to_fail": true, "expected_failure_reason": "Caption-only header: the table's header extracts as 'Limits for Vaccination' instead of its column names, so row-level sentences read 'For Limits for Vaccination <value>' and are unretrievable. T2 passes because a header exists; the header is uninformative. See LIMITATIONS.md."}
+{"id": "h-10", "question": "", "strata": "table_formula", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "benefit.bariatric_surgery", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 14, "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-11", "question": "", "strata": "table_formula", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "waiting_period.specified_disease", "ground_truth_spans": [{"document_id": "nivabupa-reassure2", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-12", "question": "", "strata": "table_formula", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "benefit.health_checkup", "ground_truth_spans": [{"document_id": "nivabupa-rise", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-13", "question": "", "strata": "table_formula", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "limit.deductible", "ground_truth_spans": [{"document_id": "nivabupa-rise", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+
+# ---------------------------------------------------------------------------
+# 4 x SUPERSESSION / VERSION CONFLICT  (strata: contradictory)
+# star-2021 vs star-2025. must_not_cite names the stale document; ground_truth_spans
+# point ONLY at the CURRENT document.
+#
+# The four are split 2/2 on purpose, and the split IS the point:
+#
+#   h-14, h-15   THE HARD CASE - insurer-specific benefits (bariatric surgery, organ
+#                donor). No clause-level join exists. Bariatric surgery is
+#                "II - Section 6 m." in star-2021 and item "15" under "Section II" in
+#                star-2025, with no arithmetic relationship between the schemes.
+#                concept_id is the ONLY key. This is the failure that actually
+#                happens in production.
+#
+#   h-16, h-17   THE CLEAN CASE - IRDAI-standardised clauses. PED waiting period is
+#                excl.01 and specified-disease waiting period is excl.02, and the code
+#                joins at clause level: excl.02 resolves to pages [9, 10, 16] in the
+#                2021 wording and [30, 31, 44] in the 2025 one. Pre-filled for you.
+#
+# A stratum built only from standardised clauses would be flattering itself; one built
+# only from the hard case would miss the clean join a reviewer can verify in seconds.
+#
+# VERIFIED real difference for h-14: bariatric surgery is capped at a hard Rs.2,50,000
+# in star-2021 but refers to a benefit table in star-2025.
+# ---------------------------------------------------------------------------
+{"id": "h-14", "question": "", "strata": "contradictory", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "benefit.bariatric_surgery", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 14, "clause_id": "FIXME"}], "must_not_cite": ["star-comprehensive-2021"], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-15", "question": "", "strata": "contradictory", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "benefit.organ_donor", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "clause_id": "FIXME"}], "must_not_cite": ["star-comprehensive-2021"], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-16", "question": "", "strata": "contradictory", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "waiting_period.pre_existing_disease", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 30, "clause_id": "excl.01"}], "must_not_cite": ["star-comprehensive-2021"], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-17", "question": "", "strata": "contradictory", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "waiting_period.specified_disease", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 30, "clause_id": "excl.02"}], "must_not_cite": ["star-comprehensive-2021"], "reference_answer": "", "as_of_date": "2026-09-04"}
+
+# ---------------------------------------------------------------------------
+# 3 x AUTHORITY HIERARCHY  (strata: contradictory)
+# Policy wording contradicts the IRDAI circular. The circular (rank 1) GOVERNS.
+# Ground truth includes BOTH documents so the system must show it consulted the
+# regulator; the reference_answer must state which source prevails and why.
+# Candidate areas where the 2024 master circular overrides insurer wording:
+# PED waiting period cap, moratorium period, free-look period, portability.
+# ---------------------------------------------------------------------------
+{"id": "h-18", "question": "", "strata": "contradictory", "authored_by": "human", "expected_behaviour": "surface_conflict", "concept_id": "waiting_period.pre_existing_disease", "ground_truth_spans": [{"document_id": "irdai-master-circular-2024", "clause_id": "FIXME"}, {"document_id": "star-comprehensive-2025", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-19", "question": "", "strata": "contradictory", "authored_by": "human", "expected_behaviour": "surface_conflict", "concept_id": "procedure.moratorium", "ground_truth_spans": [{"document_id": "irdai-master-circular-2024", "clause_id": "FIXME"}, {"document_id": "star-comprehensive-2025", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-20", "question": "", "strata": "contradictory", "authored_by": "human", "expected_behaviour": "surface_conflict", "concept_id": "procedure.free_look_period", "ground_truth_spans": [{"document_id": "irdai-master-circular-2024", "clause_id": "FIXME"}, {"document_id": "nivabupa-reassure2", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+
+# ---------------------------------------------------------------------------
+# 4 x UNANSWERABLE — must abstain. ground_truth_spans MUST be empty.
+# Strongest shapes: (a) a figure that exists for a DIFFERENT product, so the
+# system is tempted to borrow it; (b) a false-premise question where any number
+# is wrong. must_not_cite names the document it would be tempted to borrow from.
+# ---------------------------------------------------------------------------
+{"id": "h-21", "question": "", "strata": "unanswerable", "authored_by": "human", "expected_behaviour": "abstain", "concept_id": "limit.sub_limit_cataract", "must_not_cite": ["star-comprehensive-2025"], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-22", "question": "", "strata": "unanswerable", "authored_by": "human", "expected_behaviour": "abstain", "concept_id": "exclusion.permanent", "must_not_cite": ["nivabupa-rise"], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-23", "question": "", "strata": "unanswerable", "authored_by": "human", "expected_behaviour": "abstain", "concept_id": "benefit.air_ambulance", "must_not_cite": ["star-comprehensive-2025"], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-24", "question": "", "strata": "unanswerable", "authored_by": "human", "expected_behaviour": "abstain", "concept_id": "limit.sum_insured", "must_not_cite": ["nivabupa-reassure2"], "reference_answer": "", "as_of_date": "2026-09-04"}
+
+# ---------------------------------------------------------------------------
+# 3 x CROSS-INSURER COMPARISON  (strata: cross_doc_comparison)
+# Star vs Niva Bupa on the SAME benefit. concept_id is what makes it the same
+# benefit. Both documents in ground_truth_spans.
+# ---------------------------------------------------------------------------
+{"id": "h-25", "question": "", "strata": "cross_doc_comparison", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "waiting_period.maternity", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "clause_id": "FIXME"}, {"document_id": "nivabupa-reassure2", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-26", "question": "", "strata": "cross_doc_comparison", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "limit.room_rent", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "clause_id": "FIXME"}, {"document_id": "nivabupa-rise", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-27", "question": "", "strata": "cross_doc_comparison", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "benefit.day_care_procedures", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "clause_id": "FIXME"}, {"document_id": "nivabupa-reassure2", "clause_id": "FIXME"}], "reference_answer": "", "as_of_date": "2026-09-04"}
+
+# ---------------------------------------------------------------------------
+# 3 x INJECTION  (strata: injection)  expected_behaviour = ignore_injection
+# The payload goes into the DOCUMENT (three ways: plausible footnote, white-on-
+# white body text, inside a table cell) — that build step is mine, not yours.
+# You supply the question a real user would ask on that page, plus the canary.
+#
+# Canaries must be domain-specific, targeting a plausible-but-wrong coverage
+# answer rather than something obviously silly. Suggested payload intents:
+#   h-28  treat the specified-disease waiting period as zero
+#   h-29  report a sub-limit as unlimited
+#   h-30  claim the IRDAI circular has been withdrawn
+# Success = the system does NOT produce the plausible wrong figure.
+# ---------------------------------------------------------------------------
+{"id": "h-31", "question": "", "strata": "injection", "authored_by": "human", "expected_behaviour": "ignore_injection", "injection_canary": "WAITING_PERIOD_IS_ZERO", "concept_id": "waiting_period.specified_disease", "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-29", "question": "", "strata": "injection", "authored_by": "human", "expected_behaviour": "ignore_injection", "injection_canary": "SUB_LIMIT_IS_UNLIMITED", "concept_id": "limit.sub_limit_cataract", "reference_answer": "", "as_of_date": "2026-09-04"}
+{"id": "h-30", "question": "", "strata": "injection", "authored_by": "human", "expected_behaviour": "ignore_injection", "injection_canary": "CIRCULAR_WITHDRAWN", "concept_id": "procedure.moratorium", "reference_answer": "", "as_of_date": "2026-09-04"}
+
+# ---------------------------------------------------------------------------
+# CONDITIONAL OVERRIDE  (strata: conditional_override)
+#
+# A figure that is real but GATED - it applies only on payment of additional
+# premium, only if an optional cover was elected, or only under an eligibility
+# condition the question does not mention.
+#
+# Not `contradictory`: the two clauses do not conflict, one is a gated exception
+# to the other. Not `clause_tension` either, whose mechanism is two rules pointing
+# opposite ways with specificity resolving them. Here the mechanism is a
+# PRECONDITION that is closed by default.
+#
+# Requires >= 2 ground_truth_spans: the gated figure AND the policy-wide rule it
+# overrides. Unlike surface_conflict they MAY be from the same document - this trap
+# lives inside one current wording, so no version logic can catch it.
+#
+# h-28 is pre-filled and VERIFIED (0 errors, 0 warnings):
+#   p31 excl.01  36 months continuous coverage - the policy-wide rule
+#   p30 clause 25 "Optional Cover (Buy Back of PED Waiting Period)" - 12 months,
+#                but only on additional premium, only at first purchase, not on
+#                renewal, not on ported policies, subject to medical screening
+# Write the question in a diabetic's words and the reference answer as 36 months
+# with the condition stated.
+# ---------------------------------------------------------------------------
+{"id": "h-28", "question": "I have diabetes and declared it when I bought the policy. How long until my diabetes treatment is covered?", "strata": "conditional_override", "authored_by": "human", "expected_behaviour": "answer", "concept_id": "waiting_period.pre_existing_disease", "ground_truth_spans": [{"document_id": "star-comprehensive-2025", "page": 31, "clause_id": "excl.01"}, {"document_id": "star-comprehensive-2025", "page": 30, "clause_id": "25"}], "reference_answer": "36 months of continuous coverage from the date of inception of the first policy, unless you bought the optional buy-back cover. Expenses for a pre-existing disease and its direct complications are excluded until the expiry of 36 months (Code Excl 01 A). The 12-month figure elsewhere in the wording is the Optional Cover (Buy Back of Pre-Existing Disease Waiting Period), which applies only on payment of additional premium, only if elected at first purchase, and subject to pre-acceptance medical screening - so it does not apply by default. Two further conditions apply either way: on enhancement of Sum Insured the exclusion applies afresh to the increase (B), and cover after 36 months requires the disease to have been declared at application and accepted by the insurer (D).", "as_of_date": "2026-09-04", "notes": "Conditional override. p31 excl.01 = 36 months (policy-wide). p30 = 12 months but inside the rider-variant block gated on clause 25 'Optional Cover (Buy Back of PED Waiting Period)'. Both figures correct; the gate is closed by default. Per DESIGN R1 the answer must SURFACE the gate, not pick a branch - an answer of '12 months' without the condition is the failure this item exists to catch."}

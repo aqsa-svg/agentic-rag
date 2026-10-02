@@ -1,0 +1,374 @@
+{
+  "bm25": {
+    "off": {
+      "metrics": {
+        "recall_at_k": 0.4,
+        "ndcg_at_k": 0.23494021254469658,
+        "mrr": 0.20666666666666664,
+        "precision_at_k": 0.06000000000000001,
+        "hit_rate": 0.6
+      },
+      "stale_chunks_in_top_k": 11,
+      "per_item": [
+        {
+          "id": "h-01",
+          "recall": 1.0,
+          "ndcg": 0.6309297535714575,
+          "top_doc": "star-comprehensive-2021",
+          "stale_in_top_k": 3
+        },
+        {
+          "id": "h-02",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "irdai-annexure-2024",
+          "stale_in_top_k": 1
+        },
+        {
+          "id": "h-03",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "nivabupa-reassure2",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-04",
+          "recall": 0.5,
+          "ndcg": 0.3065735963827292,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 1
+        },
+        {
+          "id": "h-28",
+          "recall": 0.5,
+          "ndcg": 0.23719771276929622,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 2
+        },
+        {
+          "id": "h-23",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 1
+        },
+        {
+          "id": "h-24",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 3
+        }
+      ]
+    },
+    "on": {
+      "metrics": {
+        "recall_at_k": 0.4,
+        "ndcg_at_k": 0.314128343791064,
+        "mrr": 0.31666666666666665,
+        "precision_at_k": 0.06000000000000001,
+        "hit_rate": 0.6
+      },
+      "stale_chunks_in_top_k": 0,
+      "per_item": [
+        {
+          "id": "h-01",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-02",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "irdai-annexure-2024",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-03",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "nivabupa-reassure2",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-04",
+          "recall": 0.5,
+          "ndcg": 0.3065735963827292,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-28",
+          "recall": 0.5,
+          "ndcg": 0.2640681225725909,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-23",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-24",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 0
+        }
+      ]
+    }
+  },
+  "dense": {
+    "off": {
+      "metrics": {
+        "recall_at_k": 0.6,
+        "ndcg_at_k": 0.41980253926658245,
+        "mrr": 0.32666666666666666,
+        "precision_at_k": 0.12,
+        "hit_rate": 0.8
+      },
+      "stale_chunks_in_top_k": 14,
+      "per_item": [
+        {
+          "id": "h-01",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 3
+        },
+        {
+          "id": "h-02",
+          "recall": 0.5,
+          "ndcg": 0.17723928678404774,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 2
+        },
+        {
+          "id": "h-03",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "irdai-annexure-2024",
+          "stale_in_top_k": 1
+        },
+        {
+          "id": "h-04",
+          "recall": 0.5,
+          "ndcg": 0.23719771276929622,
+          "top_doc": "irdai-master-circular-2024",
+          "stale_in_top_k": 2
+        },
+        {
+          "id": "h-28",
+          "recall": 1.0,
+          "ndcg": 0.6845756967795682,
+          "top_doc": "star-comprehensive-2021",
+          "stale_in_top_k": 3
+        },
+        {
+          "id": "h-23",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 1
+        },
+        {
+          "id": "h-24",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "nivabupa-reassure2",
+          "stale_in_top_k": 2
+        }
+      ]
+    },
+    "on": {
+      "metrics": {
+        "recall_at_k": 0.7,
+        "ndcg_at_k": 0.5257904302789339,
+        "mrr": 0.375,
+        "precision_at_k": 0.16,
+        "hit_rate": 0.8
+      },
+      "stale_chunks_in_top_k": 0,
+      "per_item": [
+        {
+          "id": "h-01",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-02",
+          "recall": 1.0,
+          "ndcg": 0.37800210039683896,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-03",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "irdai-annexure-2024",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-04",
+          "recall": 0.5,
+          "ndcg": 0.44130740935663865,
+          "top_doc": "irdai-master-circular-2024",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-28",
+          "recall": 1.0,
+          "ndcg": 0.8096426416411919,
+          "top_doc": "nivabupa-reassure2",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-23",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-24",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "nivabupa-reassure2",
+          "stale_in_top_k": 0
+        }
+      ]
+    }
+  },
+  "hybrid": {
+    "off": {
+      "metrics": {
+        "recall_at_k": 0.4,
+        "ndcg_at_k": 0.3829978104759447,
+        "mrr": 0.35,
+        "precision_at_k": 0.08,
+        "hit_rate": 0.6
+      },
+      "stale_chunks_in_top_k": 8,
+      "per_item": [
+        {
+          "id": "h-01",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 3
+        },
+        {
+          "id": "h-02",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "nivabupa-reassure2",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-03",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-04",
+          "recall": 0.5,
+          "ndcg": 0.2640681225725909,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 1
+        },
+        {
+          "id": "h-28",
+          "recall": 0.5,
+          "ndcg": 0.6509209298071326,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 3
+        },
+        {
+          "id": "h-23",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "nivabupa-reassure2",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-24",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 1
+        }
+      ]
+    },
+    "on": {
+      "metrics": {
+        "recall_at_k": 0.4,
+        "ndcg_at_k": 0.3861248232773134,
+        "mrr": 0.36666666666666664,
+        "precision_at_k": 0.08,
+        "hit_rate": 0.6
+      },
+      "stale_chunks_in_top_k": 0,
+      "per_item": [
+        {
+          "id": "h-01",
+          "recall": 1.0,
+          "ndcg": 1.0,
+          "top_doc": "star-comprehensive-2025",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-02",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "nivabupa-reassure2",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-03",
+          "recall": 0.0,
+          "ndcg": 0.0,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-04",
+          "recall": 0.5,
+          "ndcg": 0.3065735963827292,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-28",
+          "recall": 0.5,
+          "ndcg": 0.6240505200038379,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-23",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "nivabupa-reassure2",
+          "stale_in_top_k": 0
+        },
+        {
+          "id": "h-24",
+          "recall": null,
+          "ndcg": null,
+          "top_doc": "nivabupa-rise",
+          "stale_in_top_k": 0
+        }
+      ]
+    }
+  }
+}

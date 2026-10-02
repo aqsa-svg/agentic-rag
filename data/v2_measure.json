@@ -1,0 +1,315 @@
+{
+  "bm25": {
+    "metrics": {
+      "recall_at_k": 0.4,
+      "precision_at_k": 0.06000000000000001,
+      "mrr": 0.20666666666666664,
+      "ndcg_at_k": 0.23494021254469658,
+      "hit_rate": 0.6
+    },
+    "latency_ms_mean": 2.3980428647649075,
+    "tokens_at_k": 3744.285714285714,
+    "per_item": [
+      {
+        "id": "h-01",
+        "strata": "definitional_carveout",
+        "recall": 1.0,
+        "ndcg": 0.6309297535714575,
+        "mrr": 0.5,
+        "ranks": [
+          2
+        ],
+        "top_doc": "star-comprehensive-2021",
+        "top_page": 3,
+        "top_clause": "def.hospital"
+      },
+      {
+        "id": "h-02",
+        "strata": "definitional_carveout",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "ranks": [
+          null,
+          null
+        ],
+        "top_doc": "irdai-annexure-2024",
+        "top_page": 4,
+        "top_clause": null
+      },
+      {
+        "id": "h-03",
+        "strata": "definitional_carveout",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "ranks": [
+          null
+        ],
+        "top_doc": "nivabupa-reassure2",
+        "top_page": 26,
+        "top_clause": "4"
+      },
+      {
+        "id": "h-04",
+        "strata": "conditional_override",
+        "recall": 0.5,
+        "ndcg": 0.3065735963827292,
+        "mrr": 0.3333333333333333,
+        "ranks": [
+          3,
+          null
+        ],
+        "top_doc": "nivabupa-rise",
+        "top_page": 13,
+        "top_clause": "5"
+      },
+      {
+        "id": "h-28",
+        "strata": "conditional_override",
+        "recall": 0.5,
+        "ndcg": 0.23719771276929622,
+        "mrr": 0.2,
+        "ranks": [
+          5,
+          null
+        ],
+        "top_doc": "nivabupa-rise",
+        "top_page": 3,
+        "top_clause": "2"
+      },
+      {
+        "id": "h-23",
+        "strata": "unanswerable",
+        "recall": null,
+        "ndcg": null,
+        "mrr": null,
+        "ranks": [],
+        "top_doc": "nivabupa-rise",
+        "top_page": 13,
+        "top_clause": "5"
+      },
+      {
+        "id": "h-24",
+        "strata": "unanswerable",
+        "recall": null,
+        "ndcg": null,
+        "mrr": null,
+        "ranks": [],
+        "top_doc": "star-comprehensive-2025",
+        "top_page": 29,
+        "top_clause": null
+      }
+    ]
+  },
+  "dense": {
+    "metrics": {
+      "recall_at_k": 0.6,
+      "precision_at_k": 0.12,
+      "mrr": 0.32666666666666666,
+      "ndcg_at_k": 0.41980253926658245,
+      "hit_rate": 0.8
+    },
+    "latency_ms_mean": 123.27047143896509,
+    "tokens_at_k": 3348.285714285714,
+    "per_item": [
+      {
+        "id": "h-01",
+        "strata": "definitional_carveout",
+        "recall": 1.0,
+        "ndcg": 1.0,
+        "mrr": 1.0,
+        "ranks": [
+          1
+        ],
+        "top_doc": "star-comprehensive-2025",
+        "top_page": 4,
+        "top_clause": "def.hospital"
+      },
+      {
+        "id": "h-02",
+        "strata": "definitional_carveout",
+        "recall": 0.5,
+        "ndcg": 0.17723928678404774,
+        "mrr": 0.1,
+        "ranks": [
+          10,
+          null
+        ],
+        "top_doc": "star-comprehensive-2025",
+        "top_page": 7,
+        "top_clause": "def.specific_waiting_period"
+      },
+      {
+        "id": "h-03",
+        "strata": "definitional_carveout",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "ranks": [
+          null
+        ],
+        "top_doc": "irdai-annexure-2024",
+        "top_page": 2,
+        "top_clause": null
+      },
+      {
+        "id": "h-04",
+        "strata": "conditional_override",
+        "recall": 0.5,
+        "ndcg": 0.23719771276929622,
+        "mrr": 0.2,
+        "ranks": [
+          5,
+          null
+        ],
+        "top_doc": "irdai-master-circular-2024",
+        "top_page": 7,
+        "top_clause": "8"
+      },
+      {
+        "id": "h-28",
+        "strata": "conditional_override",
+        "recall": 1.0,
+        "ndcg": 0.6845756967795682,
+        "mrr": 0.3333333333333333,
+        "ranks": [
+          8,
+          3
+        ],
+        "top_doc": "star-comprehensive-2021",
+        "top_page": 9,
+        "top_clause": "12"
+      },
+      {
+        "id": "h-23",
+        "strata": "unanswerable",
+        "recall": null,
+        "ndcg": null,
+        "mrr": null,
+        "ranks": [],
+        "top_doc": "star-comprehensive-2025",
+        "top_page": 9,
+        "top_clause": "1"
+      },
+      {
+        "id": "h-24",
+        "strata": "unanswerable",
+        "recall": null,
+        "ndcg": null,
+        "mrr": null,
+        "ranks": [],
+        "top_doc": "nivabupa-reassure2",
+        "top_page": 8,
+        "top_clause": "12"
+      }
+    ]
+  },
+  "hybrid": {
+    "metrics": {
+      "recall_at_k": 0.4,
+      "precision_at_k": 0.08,
+      "mrr": 0.35,
+      "ndcg_at_k": 0.3829978104759447,
+      "hit_rate": 0.6
+    },
+    "latency_ms_mean": 103.82822856938999,
+    "tokens_at_k": 3779.285714285714,
+    "per_item": [
+      {
+        "id": "h-01",
+        "strata": "definitional_carveout",
+        "recall": 1.0,
+        "ndcg": 1.0,
+        "mrr": 1.0,
+        "ranks": [
+          1
+        ],
+        "top_doc": "star-comprehensive-2025",
+        "top_page": 4,
+        "top_clause": "def.hospital"
+      },
+      {
+        "id": "h-02",
+        "strata": "definitional_carveout",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "ranks": [
+          null,
+          null
+        ],
+        "top_doc": "nivabupa-reassure2",
+        "top_page": 15,
+        "top_clause": "12"
+      },
+      {
+        "id": "h-03",
+        "strata": "definitional_carveout",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "mrr": 0.0,
+        "ranks": [
+          null
+        ],
+        "top_doc": "nivabupa-rise",
+        "top_page": 24,
+        "top_clause": "8"
+      },
+      {
+        "id": "h-04",
+        "strata": "conditional_override",
+        "recall": 0.5,
+        "ndcg": 0.2640681225725909,
+        "mrr": 0.25,
+        "ranks": [
+          4,
+          null
+        ],
+        "top_doc": "nivabupa-rise",
+        "top_page": 13,
+        "top_clause": "5"
+      },
+      {
+        "id": "h-28",
+        "strata": "conditional_override",
+        "recall": 0.5,
+        "ndcg": 0.6509209298071326,
+        "mrr": 0.5,
+        "ranks": [
+          2,
+          null
+        ],
+        "top_doc": "nivabupa-rise",
+        "top_page": 14,
+        "top_clause": "7"
+      },
+      {
+        "id": "h-23",
+        "strata": "unanswerable",
+        "recall": null,
+        "ndcg": null,
+        "mrr": null,
+        "ranks": [],
+        "top_doc": "nivabupa-reassure2",
+        "top_page": 26,
+        "top_clause": "4"
+      },
+      {
+        "id": "h-24",
+        "strata": "unanswerable",
+        "recall": null,
+        "ndcg": null,
+        "mrr": null,
+        "ranks": [],
+        "top_doc": "nivabupa-rise",
+        "top_page": 13,
+        "top_clause": "5"
+      }
+    ]
+  },
+  "model": "BAAI/bge-base-en-v1.5",
+  "dense_index_bytes": 3145728,
+  "embed_seconds": 0.0,
+  "n_chunks": 1024
+}

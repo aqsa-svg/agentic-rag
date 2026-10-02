@@ -1,0 +1,56 @@
+# Secrets. The .env.example template is committed; .env never is.
+.env
+.env.*
+!.env.example
+
+# Source documents are copyrighted and are never committed (DESIGN §2).
+# Only data/manifest/sources.jsonl (URLs + hashes) is tracked.
+data/raw/
+data/pdf/
+*.pdf
+
+# Derived index artefacts: rebuildable from the manifest, too large to track.
+data/index/
+data/chunks/
+*.idx
+*.faiss
+
+# Model weights, pulled at ingest time on the local GPU.
+models/
+*.onnx
+*.safetensors
+*.gguf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# data/eval_runs.jsonl IS tracked on purpose: it is the metric history the project is
+# judged on.
+#
+# data/cassettes/ WAS tracked for the same class of reason - they make the PR gate
+# deterministic and free without an API key. Excluded 2026-10-02 before first publication:
+# each cassette embeds the retrieved passages VERBATIM in its prompt field, which is the
+# same copyrighted policy text data/raw/ is excluded for. Tracking them republishes Star
+# Health's and Niva Bupa's wordings through the back door.
+#
+# The cassette key is a hash of the full request, so the text cannot be stripped without
+# breaking replay. Copyright wins; free CI is recoverable by anyone holding the PDFs.
+data/cassettes/

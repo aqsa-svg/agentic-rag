@@ -1,0 +1,126 @@
+name: ci
+
+# Two-tier evaluation, per DESIGN §7.
+#
+# PR job:     lint, typecheck, tests with a 70% coverage floor, and the eval gate against
+#             recorded cassettes. Seconds, free, deterministic, no API keys in scope.
+# Nightly:    the full suite against live models with thresholds enforced.
+#
+# The split exists because a gate that flakes on a 15 RPM rate limit is a gate people
+# learn to re-run instead of read. Determinism is the feature.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # 02:30 UTC daily. Live models, full golden set.
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUNBUFFERED: "1"
+  ARAG_ENV: ci
+
+jobs:
+  gate:
+    name: PR gate (offline, deterministic)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+
+      - name: Lint
+        run: |
+          ruff check src tests
+          ruff format --check src tests
+
+      - name: Typecheck
+        run: mypy
+
+      - name: Validate golden set
+        # Reports composition shortfall. Does not fail the build while the set is still
+        # seed data; it becomes a hard gate once the real 120 items land.
+        run: arag-eval validate
+
+      - name: Tests with coverage floor
+        run: pytest -m "not live" --cov --cov-report=term-missing --cov-fail-under=70
+
+      - name: Eval gate
+        # Exit 1 = quality regression. Exit 2 = the harness itself is broken (invalid
+        # golden set, stale cassette, bad config). Distinguishing them is the point.
+        run: arag-eval run --engine null --fast
+
+      - name: Upload run artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-gate-${{ github.sha }}
+          path: |
+            EVAL_LOG.md
+            data/eval_runs.jsonl
+          if-no-files-found: ignore
+
+  nightly:
+    name: Nightly full eval (live models)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # Secrets are injected here only. The PR job above never has them in scope, so a
+      # fork PR cannot exfiltrate a key and cannot spend the API budget.
+      ARAG_GEMINI_API_KEY: ${{ secrets.ARAG_GEMINI_API_KEY }}
+      ARAG_DATABASE_URL: ${{ secrets.ARAG_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: python -m pip install -e ".[dev,ragas]"
+
+      - name: Full eval
+        # Concurrency stays low: the generator sits behind a 15 RPM free tier and an
+        # unbounded fan-out would spend the run in backoff, making latency numbers useless.
+        run: arag-eval run --engine null --concurrency 2
+
+      - name: Commit updated metric history
+        # The v1 -> v2 -> v3 metric log is the most valuable artefact this project
+        # produces, so the nightly writes it back rather than leaving it in an artefact
+        # that expires in 90 days.
+        run: |
+          if [ -n "$(git status --porcelain EVAL_LOG.md data/eval_runs.jsonl)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add EVAL_LOG.md data/eval_runs.jsonl
+            git commit -m "chore(eval): nightly run $(date -u +%Y-%m-%d)"
+            git push
+          else
+            echo "no metric change"
+          fi
+
+      - name: Upload run artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-nightly-${{ github.run_id }}
+          path: |
+            EVAL_LOG.md
+            data/eval_runs.jsonl
+          if-no-files-found: ignore

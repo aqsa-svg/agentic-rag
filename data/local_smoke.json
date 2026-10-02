@@ -1,0 +1,79 @@
+[
+  {
+    "id": "h-01",
+    "abstained": false,
+    "reason": null,
+    "answer": "No",
+    "n_citations": 1,
+    "cited_correct_span": true,
+    "in_tok": 873,
+    "out_tok": 40,
+    "wall_s": 35.8
+  },
+  {
+    "id": "h-02",
+    "abstained": false,
+    "reason": null,
+    "answer": "36 months",
+    "n_citations": 1,
+    "cited_correct_span": false,
+    "in_tok": 857,
+    "out_tok": 82,
+    "wall_s": 120.3
+  },
+  {
+    "id": "h-03",
+    "abstained": false,
+    "reason": null,
+    "answer": "No",
+    "n_citations": 1,
+    "cited_correct_span": false,
+    "in_tok": 1036,
+    "out_tok": 66,
+    "wall_s": 51.9
+  },
+  {
+    "id": "h-04",
+    "abstained": false,
+    "reason": null,
+    "answer": "Thirty days",
+    "n_citations": 1,
+    "cited_correct_span": false,
+    "in_tok": 981,
+    "out_tok": 48,
+    "wall_s": 41.0
+  },
+  {
+    "id": "h-28",
+    "abstained": false,
+    "reason": null,
+    "answer": "12 months",
+    "n_citations": 1,
+    "cited_correct_span": false,
+    "in_tok": 1015,
+    "out_tok": 102,
+    "wall_s": 64.3
+  },
+  {
+    "id": "h-23",
+    "abstained": false,
+    "reason": null,
+    "answer": "Yes",
+    "n_citations": 1,
+    "cited_correct_span": false,
+    "in_tok": 1157,
+    "out_tok": 40,
+    "wall_s": 40.1
+  },
+  {
+    "id": "h-24",
+    "abstained": false,
+    "reason": null,
+    "answer": "null",
+    "n_citations": 1,
+    "cited_correct_span": false,
+    "in_tok": 1459,
+    "out_tok": 41,
+    "wall_s": 48.5
+  }
+]

@@ -1,0 +1,135 @@
+# Regression gate thresholds.
+#
+# Profiles are versioned per slice rather than being a single moving set of numbers. That
+# is deliberate: a single mutable threshold file invites the failure where a regression is
+# "fixed" by lowering the bar in the same PR, and the git history then shows a green build
+# with no record that quality dropped. Bumping `active_profile` is an explicit, reviewable
+# act; editing a number inside an already-shipped profile is not allowed.
+#
+# Every value here must eventually be justified by a number the eval suite produced. The
+# v0 profile is the only one permitted to be all-zeros, because its purpose is to prove the
+# harness registers total failure.
+
+price_table_version: "2026-09-04.a"
+active_profile: v1r_baseline
+
+# DESIGN §13 assumption 4. The single number that calibrates the abstain threshold.
+# Change this and the F7 threshold sweep in v4 produces a different answer.
+calibration:
+  wrong_answer_cost: 50.0
+  abstention_cost: 1.0
+
+judge:
+  # DESIGN §5.8: below this, the local judge's scores are not evidence and the suite says so.
+  min_kappa: 0.60
+  agreement_sample_size: 25
+
+retrieval:
+  k: 10
+  match_mode: clause_prefix
+  # Raising this hides chunking defects. Do not change without a written reason.
+  page_tolerance: 0
+
+profiles:
+
+  v0_floor:
+    description: >
+      NullEngine baseline. Proves the harness registers total failure. Every retrieval
+      metric must read exactly 0.0 here; a non-zero value means a metric is broken.
+    gate:
+      min_recall_at_k: 0.0
+      min_ndcg_at_k: 0.0
+      min_mrr: 0.0
+      max_false_abstention_rate: 1.0
+      min_abstain_recall: 0.0
+      min_injection_resistance: 1.0
+      max_supersession_violations: 0
+      # Deliberately unset: NullEngine never answers, so no citation is ever produced and
+      # there is nothing to ground. A threshold here would fail the gate with "no
+      # measurement produced" — which is the correct behaviour of the gate and the wrong
+      # threshold for this profile. It becomes 0.05 at v1, where answers exist.
+      max_ungrounded_citation_rate: null
+      p95_flat_ms: null
+      p95_agentic_ms: null
+    # Metrics asserted to be exactly this value, not merely above a floor. This is what
+    # turns "the harness works" from a claim into a test.
+    exact:
+      recall_at_k: 0.0
+      ndcg_at_k: 0.0
+      mrr: 0.0
+      hit_rate: 0.0
+
+  v1_baseline:
+    description: >
+      SUPERSEDED 2026-09-16. Kept for the record, not selectable. Its numbers were produced
+      by a matcher that could not see three of the seven items' spans - see
+      silent-wrongness instance 9 - so every floor below sits UNDER the true v1 floor.
+      Re-derived as v1r_baseline. Do not reuse.
+    gate:
+      min_recall_at_k: 0.30
+      min_ndcg_at_k: 0.18
+      min_mrr: 0.16
+      max_false_abstention_rate: 1.00
+      min_abstain_recall: null
+      min_injection_resistance: null
+      max_ungrounded_citation_rate: null
+      max_supersession_violations: 0
+      p95_flat_ms: 250
+      p95_agentic_ms: 250
+
+  v1r_baseline:
+    description: >
+      BM25-only over clause-aware chunks, markdown serialisation. Re-derived from the
+      re-freeze recorded in data/baseline_v1r.json and docs/BASELINE_V1R.md, after the
+      instance 9 matcher fix. Same corpus, same config, same labels as v1_baseline - the
+      ONLY change is that chunks now carry the clause ids their text contains.
+
+      WHY THIS PROFILE EXISTS, stated plainly because it is the point of the whole episode:
+      the original v1_baseline thresholds were derived from numbers produced by a matcher
+      BLIND TO THREE OF SEVEN ITEMS. Measured BM25 recall was 0.300; the true figure is
+      0.400. So min_recall_at_k sat at 0.30 - a tenth BELOW the real floor - and a
+      regression that destroyed an entire item's retrieval would have scored 0.300 and
+      PASSED THE GATE.
+
+      That is the sharpest consequence of instance 9. The chunker gap did not merely
+      understate the numbers; it disarmed the guard that existed to catch a regression in
+      exactly those numbers. A gate derived from an invalidated measurement cannot catch
+      the thing it was built to catch, and nothing about it looks wrong from the outside:
+      it was green throughout.
+
+      PROVISIONAL, and more so than its predecessor claimed: 5 of the 7 items carry
+      ground-truth spans, so one item flipping moves recall by 0.2. MUST be re-derived when
+      30 items land. A brittle gate that is known to be brittle is preferable to a loose one
+      that hides a real regression - which is precisely what the loose one did.
+    gate:
+      # Measured, markdown serialisation: recall 0.400, nDCG 0.2349, MRR 0.2067,
+      # ctx precision 0.060, hit rate 0.600. Set at the measured floor, no tolerance:
+      # any drop is a regression worth stopping for.
+      min_recall_at_k: 0.40
+      min_ndcg_at_k: 0.23
+      min_mrr: 0.20
+
+      # 1.0 remains CORRECT for v1r, not a concession. RetrievalOnlyEngine abstains on
+      # every item by design: no generator is wired and no judge has a measured kappa, so
+      # emitting an answer could not be justified. Tightens to 0.60 when generation lands.
+      max_false_abstention_rate: 1.00
+
+      # Deliberately unset - no measurement exists, and a threshold on an absent metric
+      # fails the gate for the wrong reason:
+      #   abstain_recall       - h-23 and h-24 exist but abstention is unconditional, so
+      #                          the metric would measure the engine's only behaviour
+      #   injection_resistance - no `injection` items yet
+      #   ungrounded_citation  - v1r emits no citations, having no generator
+      min_abstain_recall: null
+      min_injection_resistance: null
+      max_ungrounded_citation_rate: null
+
+      # Still 0, and still VACUOUS: no label carries a must_not_cite, so nothing can
+      # violate it. h-01 retrieves the superseded 2021 wording at rank 1 and this passes.
+      # The threshold is real; the measurement behind it is not. See docs/BASELINE_V1R.md.
+      max_supersession_violations: 0
+
+      # Measured p95 4-20ms across runs, dominated by machine load rather than code.
+      # 250ms is ~12x the worst observed; a tighter bound fails on noise, not regressions.
+      p95_flat_ms: 250
+      p95_agentic_ms: 250

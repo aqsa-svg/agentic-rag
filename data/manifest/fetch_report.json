@@ -1,0 +1,124 @@
+[
+  {
+    "source_id": "star-comprehensive-2025",
+    "outcome": "ok",
+    "usable": true,
+    "sha256": "b1dbe8fb78646f75566d47c32b7ebfa27c4071941c8f548224c461ee35a8021f",
+    "size_bytes": 2101643,
+    "mirror_drift": false,
+    "detail": null,
+    "attempts": [
+      {
+        "url": "https://d28c6jni2fmamz.cloudfront.net/Policy_Star_Comprehensive_Insurance_Policy_V_21_3a414ab104.pdf",
+        "status": 200,
+        "content_type": "application/pdf",
+        "bytes": 2101643,
+        "sha256": "b1dbe8fb78646f75566d47c32b7ebfa27c4071941c8f548224c461ee35a8021f",
+        "error": null
+      }
+    ]
+  },
+  {
+    "source_id": "star-comprehensive-2021",
+    "outcome": "ok",
+    "usable": true,
+    "sha256": "62cde5ea59de0904952b7174c03b248ac307269da96d0d6b7f262c5414f5417a",
+    "size_bytes": 1558707,
+    "mirror_drift": false,
+    "detail": null,
+    "attempts": [
+      {
+        "url": "https://healthstatic.policybazaar.com/health-insurance/Insurer_Document/Star/updated%20docs/Policy%20Wordings/star-comprehensive-policy-clause-new-1.pdf",
+        "status": 200,
+        "content_type": "application/pdf",
+        "bytes": 1558707,
+        "sha256": "62cde5ea59de0904952b7174c03b248ac307269da96d0d6b7f262c5414f5417a",
+        "error": null
+      }
+    ]
+  },
+  {
+    "source_id": "nivabupa-reassure2",
+    "outcome": "ok",
+    "usable": true,
+    "sha256": "3c2589e9fe5140e8e69cab2d0a2bd981c5f7cd91f6859f0423a7cdf77f0aaa92",
+    "size_bytes": 697713,
+    "mirror_drift": false,
+    "detail": null,
+    "attempts": [
+      {
+        "url": "https://transactions.nivabupa.com/pages/doc/policy_wording/ReAssure-2.0-Policy-Wording.pdf",
+        "status": 200,
+        "content_type": "application/pdf",
+        "bytes": 697713,
+        "sha256": "3c2589e9fe5140e8e69cab2d0a2bd981c5f7cd91f6859f0423a7cdf77f0aaa92",
+        "error": null
+      }
+    ]
+  },
+  {
+    "source_id": "nivabupa-rise",
+    "outcome": "ok",
+    "usable": true,
+    "sha256": "69121ba793dc98c369286f9f7d8224070bf0c830eb11cc7e684744ecf935b802",
+    "size_bytes": 205058,
+    "mirror_drift": false,
+    "detail": null,
+    "attempts": [
+      {
+        "url": "https://transactions.nivabupa.com/pages/doc/policy_wording/Rise_Policy_Wordings.pdf",
+        "status": 200,
+        "content_type": "application/pdf",
+        "bytes": 205058,
+        "sha256": "69121ba793dc98c369286f9f7d8224070bf0c830eb11cc7e684744ecf935b802",
+        "error": null
+      }
+    ]
+  },
+  {
+    "source_id": "irdai-master-circular-2024",
+    "outcome": "ok",
+    "usable": true,
+    "sha256": "fdc70264ce307e0c0ead2de442881c907a03a638477c03a7aaf473d3cc139134",
+    "size_bytes": 962806,
+    "mirror_drift": false,
+    "detail": null,
+    "attempts": [
+      {
+        "url": "https://irdai.gov.in/documents/37343/991022/%E0%A4%B8%E0%A5%8D%E0%A4%B5%E0%A4%BE%E0%A4%B8%E0%A5%8D%E0%A4%A5%E0%A5%8D%E0%A4%AF+%E0%A4%AC%E0%A5%80%E0%A4%AE%E0%A4%BE+%E0%A4%B5%E0%A5%8D%E0%A4%AF%E0%A4%B5%E0%A4%B8%E0%A4%BE%E0%A4%AF+%E0%A4%AA%E0%A4%B0+%E0%A4%AE%E0%A4%BE%E0%A4%B8%E0%A5%8D%E0%A4%9F%E0%A4%B0+%E0%A4%AA%E0%A4%B0%E0%A4%BF%E0%A4%AA%E0%A4%A4%E0%A5%8D%E0%A4%B0-%E0%A4%85%E0%A4%82%E0%A4%97%E0%A5%8D%E0%A4%B0%E0%A5%87%E0%A4%9C%E0%A5%80+_+Master+Circular+on+Health+Insurance+Business+-English.pdf/08a32828-dc1d-116f-0549-6db86d448651?version=1.0&t=1719833433399&download=true",
+        "status": 200,
+        "content_type": "application/pdf",
+        "bytes": 962806,
+        "sha256": "fdc70264ce307e0c0ead2de442881c907a03a638477c03a7aaf473d3cc139134",
+        "error": null
+      },
+      {
+        "url": "https://www.actuariesindia.org/sites/default/files/inline-files/5.%20Master%20Circular%20on%20Health%20Insurance%20Business%202024.pdf",
+        "status": null,
+        "content_type": null,
+        "bytes": 0,
+        "sha256": null,
+        "error": "ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1081)"
+      }
+    ]
+  },
+  {
+    "source_id": "irdai-annexure-2024",
+    "outcome": "ok",
+    "usable": true,
+    "sha256": "ad03b8c043227fb1e858c701084ecaf92059b1ec01f80c707101e3ade670e163",
+    "size_bytes": 1116975,
+    "mirror_drift": false,
+    "detail": null,
+    "attempts": [
+      {
+        "url": "https://irdai.gov.in/documents/37343/991022/%E0%A4%B8%E0%A5%8D%E0%A4%B5%E0%A4%BE%E0%A4%B8%E0%A5%8D%E0%A4%A5%E0%A5%8D%E0%A4%AF+%E0%A4%AC%E0%A5%80%E0%A4%AE%E0%A4%BE+%E0%A4%B5%E0%A5%8D%E0%A4%AF%E0%A4%B5%E0%A4%B8%E0%A4%BE%E0%A4%AF+%E0%A4%AA%E0%A4%B0+%E0%A4%AE%E0%A4%BE%E0%A4%B8%E0%A5%8D%E0%A4%9F%E0%A4%B0+%E0%A4%AA%E0%A4%B0%E0%A4%BF%E0%A4%AA%E0%A4%A4%E0%A5%8D%E0%A4%B0+29052024+%E0%A4%95%E0%A4%BE+%E0%A4%85%E0%A4%A8%E0%A5%81%E0%A4%AC%E0%A4%82%E0%A4%A7+_+Annexure+to+Master+circualr+on+Health+Insurance+Business+29052024.pdf/e65501d8-2731-6f5c-aaed-658f961289e1?version=2.0&t=1717051485494&download=true",
+        "status": 200,
+        "content_type": "application/pdf",
+        "bytes": 1116975,
+        "sha256": "ad03b8c043227fb1e858c701084ecaf92059b1ec01f80c707101e3ade670e163",
+        "error": null
+      }
+    ]
+  }
+]
