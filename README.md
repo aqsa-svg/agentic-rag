@@ -30,11 +30,15 @@ Every figure is from a recorded run. Nothing here is estimated.
 | **v1r** BM25 only | 0.400 | 0.235 | 0.207 | 0.060 | 0.600 |
 | **v2** dense (`bge-base-en-v1.5`) | **0.600** | **0.420** | 0.327 | **0.120** | **0.800** |
 | **v2** RRF hybrid (`k=60`) | 0.400 | 0.383 | 0.350 | 0.080 | 0.600 |
-| **v3** dense + supersession filter | **0.700** | **0.526** | **0.375** | **0.160** | 0.800 |
+| **v3** dense + supersession filter | **0.700** | 0.526 | 0.375 | **0.160** | 0.800 |
+| **v4** + cross-encoder rerank | **0.700** | **0.595** | **0.440** | **0.160** | 0.800 |
 
 Full records: [`docs/BASELINE_V1R.md`](docs/BASELINE_V1R.md), [`docs/V2_MEASUREMENT.md`](docs/V2_MEASUREMENT.md),
-[`docs/V3_SUPERSESSION.md`](docs/V3_SUPERSESSION.md). Raw: `data/baseline_v1r.json`,
-`data/v2_measure.json`, `data/v3_supersession.json`.
+[`docs/V3_SUPERSESSION.md`](docs/V3_SUPERSESSION.md), [`docs/V4_RERANK.md`](docs/V4_RERANK.md).
+Raw: `data/baseline_v1r.json`, `data/v2_measure.json`, `data/v3_supersession.json`,
+`data/v4_rerank.json`.
+
+**v4's reranker is not shippable as measured.** It is the best ranking quality here (+0.070 nDCG, MRR 0.440) and costs **4,108 ms against DESIGN's 60 ms budget** — 65x over, more than the entire 2.5s p95 allowance in one stage. The correct online configuration remains v3 at 208 ms; the reranker is an offline quality ceiling until the ONNX-INT8 path is built and measured.
 
 **These are development-signal numbers, not results.** Seven labelled items is far below the
 composition gate, `arag-eval validate` says `NOT YET PUBLISHABLE`, and the per-stratum
@@ -155,7 +159,7 @@ and a suspended Google project. Verified end to end against a local 1.5B model i
 which found two defects a scripted test could not. Those are pipeline-verification numbers,
 never quality numbers.
 
-**Not built:** cross-encoder reranker, LangGraph agent, PII redaction, injection canaries,
+**Not built:** LangGraph agent, PII redaction, injection canaries,
 abstain calibration, the cost sweep, chaos engineering, deployment.
 
 **The binding constraint is the golden set: 7 items of a 40 target** (cut from 120 on 2026-10-02 after measuring the labelling rate — see `SetTargets`, which states what the cut costs). Everything downstream
@@ -189,5 +193,6 @@ mistake cost a full verification run.
 | [`docs/BASELINE_V1R.md`](docs/BASELINE_V1R.md) | the frozen baseline, and why it was re-frozen |
 | [`docs/V2_MEASUREMENT.md`](docs/V2_MEASUREMENT.md) | dense + hybrid, corrected in place with the original struck |
 | [`docs/V3_SUPERSESSION.md`](docs/V3_SUPERSESSION.md) | the version filter, and the delta it was deferred for |
+| [`docs/V4_RERANK.md`](docs/V4_RERANK.md) | the reranker: quality gain accepted, latency rejected |
 | [`docs/EVAL_EXPLAINED.md`](docs/EVAL_EXPLAINED.md) | the metrics from first principles, hand-worked |
 | [`docs/BUILD_RECORD.md`](docs/BUILD_RECORD.md) | which code was reviewed and which was not |

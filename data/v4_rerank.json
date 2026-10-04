@@ -1,0 +1,218 @@
+{
+  "dense": {
+    "metrics": {
+      "recall_at_k": 0.7,
+      "ndcg_at_k": 0.5257904302789339,
+      "mrr": 0.375,
+      "precision_at_k": 0.16,
+      "hit_rate": 0.8
+    },
+    "latency_ms": 208.01667143989886,
+    "per_item": [
+      {
+        "id": "h-01",
+        "recall": 1.0,
+        "ndcg": 1.0,
+        "first_hit_rank": 1
+      },
+      {
+        "id": "h-02",
+        "recall": 1.0,
+        "ndcg": 0.37800210039683896,
+        "first_hit_rank": 8
+      },
+      {
+        "id": "h-03",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "first_hit_rank": null
+      },
+      {
+        "id": "h-04",
+        "recall": 0.5,
+        "ndcg": 0.44130740935663865,
+        "first_hit_rank": 4
+      },
+      {
+        "id": "h-28",
+        "recall": 1.0,
+        "ndcg": 0.8096426416411919,
+        "first_hit_rank": 2
+      },
+      {
+        "id": "h-23",
+        "recall": null,
+        "ndcg": null,
+        "first_hit_rank": null
+      },
+      {
+        "id": "h-24",
+        "recall": null,
+        "ndcg": null,
+        "first_hit_rank": null
+      }
+    ]
+  },
+  "dense+rerank": {
+    "metrics": {
+      "recall_at_k": 0.7,
+      "ndcg_at_k": 0.5954383539591823,
+      "mrr": 0.44000000000000006,
+      "precision_at_k": 0.16,
+      "hit_rate": 0.8
+    },
+    "latency_ms": 4107.535771426878,
+    "per_item": [
+      {
+        "id": "h-01",
+        "recall": 1.0,
+        "ndcg": 1.0,
+        "first_hit_rank": 1
+      },
+      {
+        "id": "h-02",
+        "recall": 1.0,
+        "ndcg": 0.8706656904013186,
+        "first_hit_rank": 2
+      },
+      {
+        "id": "h-03",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "first_hit_rank": null
+      },
+      {
+        "id": "h-04",
+        "recall": 0.5,
+        "ndcg": 0.23719771276929622,
+        "first_hit_rank": 5
+      },
+      {
+        "id": "h-28",
+        "recall": 1.0,
+        "ndcg": 0.8693283666252967,
+        "first_hit_rank": 2
+      },
+      {
+        "id": "h-23",
+        "recall": null,
+        "ndcg": null,
+        "first_hit_rank": null
+      },
+      {
+        "id": "h-24",
+        "recall": null,
+        "ndcg": null,
+        "first_hit_rank": null
+      }
+    ]
+  },
+  "hybrid": {
+    "metrics": {
+      "recall_at_k": 0.4,
+      "ndcg_at_k": 0.3861248232773134,
+      "mrr": 0.36666666666666664,
+      "precision_at_k": 0.08,
+      "hit_rate": 0.6
+    },
+    "latency_ms": 122.63465712645224,
+    "per_item": [
+      {
+        "id": "h-01",
+        "recall": 1.0,
+        "ndcg": 1.0,
+        "first_hit_rank": 1
+      },
+      {
+        "id": "h-02",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "first_hit_rank": null
+      },
+      {
+        "id": "h-03",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "first_hit_rank": null
+      },
+      {
+        "id": "h-04",
+        "recall": 0.5,
+        "ndcg": 0.3065735963827292,
+        "first_hit_rank": 3
+      },
+      {
+        "id": "h-28",
+        "recall": 0.5,
+        "ndcg": 0.6240505200038379,
+        "first_hit_rank": 2
+      },
+      {
+        "id": "h-23",
+        "recall": null,
+        "ndcg": null,
+        "first_hit_rank": null
+      },
+      {
+        "id": "h-24",
+        "recall": null,
+        "ndcg": null,
+        "first_hit_rank": null
+      }
+    ]
+  },
+  "hybrid+rerank": {
+    "metrics": {
+      "recall_at_k": 0.5,
+      "ndcg_at_k": 0.4634953847242217,
+      "mrr": 0.44000000000000006,
+      "precision_at_k": 0.1,
+      "hit_rate": 0.8
+    },
+    "latency_ms": 4139.253228503679,
+    "per_item": [
+      {
+        "id": "h-01",
+        "recall": 1.0,
+        "ndcg": 1.0,
+        "first_hit_rank": 1
+      },
+      {
+        "id": "h-02",
+        "recall": 0.5,
+        "ndcg": 0.38685280723454163,
+        "first_hit_rank": 2
+      },
+      {
+        "id": "h-03",
+        "recall": 0.0,
+        "ndcg": 0.0,
+        "first_hit_rank": null
+      },
+      {
+        "id": "h-04",
+        "recall": 0.5,
+        "ndcg": 0.23719771276929622,
+        "first_hit_rank": 5
+      },
+      {
+        "id": "h-28",
+        "recall": 0.5,
+        "ndcg": 0.6934264036172708,
+        "first_hit_rank": 2
+      },
+      {
+        "id": "h-23",
+        "recall": null,
+        "ndcg": null,
+        "first_hit_rank": null
+      },
+      {
+        "id": "h-24",
+        "recall": null,
+        "ndcg": null,
+        "first_hit_rank": null
+      }
+    ]
+  }
+}

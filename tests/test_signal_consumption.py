@@ -87,9 +87,13 @@ FALSE_ASSURANCE = {
 # A slice not yet built, written down as such. A placeholder someone has recorded is a
 # plan; an unread field nobody has noticed is a false assurance. That is the whole
 # difference between this list and the one above.
+# `RetrievedChunk.rerank_score` was removed from this list on 2026-10-05, when
+# `arag.local.reranker` began writing it and `RetrievedChunk.confidence` began reading
+# it. The ratchet caught the change and failed the build until this edit was made,
+# which is the intended behaviour in the second direction: an inventory that silently
+# goes stale is one nobody trusts.
 PLANNED_PLACEHOLDER = {
     "RetrievedChunk.fused_score",  # set by the fuser; no consumer until the reranker lands
-    "RetrievedChunk.rerank_score",  # v2 reranker, not built
     "AnswerResult.tool_calls",  # v3 agent, not built
     "AnswerResult.cold_start",  # reported once a cold path exists to report
     "LLMResponse.raw",  # deliberate: debugging payload, never branched on
