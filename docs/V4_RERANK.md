@@ -1,4 +1,20 @@
-# v4 — the cross-encoder reranker: quality yes, latency no
+# v4 — the cross-encoder reranker: built, measured, NOT SHIPPED
+
+> ## Decision, 2026-10-05: the reranker is not in the online path.
+>
+> This is a **choice made against a measurement**, not a gap in the work. The code exists,
+> it is tested, it produces **the best ranking quality this project has measured** —
+> nDCG **0.595** against dense's **0.526**, MRR 0.440 — and it is excluded because it costs
+> **4,108 ms against DESIGN §5.5's 60 ms budget**: 65x over, more than the entire 2.5 s
+> flat-lookup p95 allowance in a single stage.
+>
+> Shipping it would have bought +0.070 nDCG and broken the latency budget by a factor of
+> 65. The online configuration therefore remains **v3 — dense + supersession filter,
+> 208 ms, nDCG 0.526** — and the reranker stays an offline quality ceiling, the role
+> DESIGN §5.5 reserves for exactly this situation.
+>
+> It becomes shippable when the ONNX-INT8 path closes the gap between 3,900 ms and 60 ms.
+> That work is specified and not done.
 
 Measured 2026-10-05. `cross-encoder/ms-marco-MiniLM-L-6-v2`, PyTorch on CPU, `fetch_k=30 →
 top_k=10`, `as_of` filtering on throughout. Same corpus, labels and embeddings as v3; the

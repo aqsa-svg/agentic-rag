@@ -38,7 +38,9 @@ Full records: [`docs/BASELINE_V1R.md`](docs/BASELINE_V1R.md), [`docs/V2_MEASUREM
 Raw: `data/baseline_v1r.json`, `data/v2_measure.json`, `data/v3_supersession.json`,
 `data/v4_rerank.json`.
 
-**v4's reranker is not shippable as measured.** It is the best ranking quality here (+0.070 nDCG, MRR 0.440) and costs **4,108 ms against DESIGN's 60 ms budget** — 65x over, more than the entire 2.5s p95 allowance in one stage. The correct online configuration remains v3 at 208 ms; the reranker is an offline quality ceiling until the ONNX-INT8 path is built and measured.
+**v4's reranker is built, measured and deliberately NOT SHIPPED.** It is the best ranking quality here — nDCG **0.595** vs dense's 0.526, MRR 0.440 — and it costs **4,108 ms against DESIGN §5.5's 60 ms budget**: 65x over, more than the entire 2.5s flat-lookup p95 allowance in a single stage. That is a decision taken against a measurement, not a gap in the work. The online configuration remains **v3 — dense + supersession filter, 208 ms** — and the reranker is an offline quality ceiling until the ONNX-INT8 path closes the gap.
+
+The script that measured it printed `EARNS IT`, because it tested `nDCG > 0` rather than DESIGN's `nDCG > 0 within 60ms`. That is the **third** guard in this project found green while the thing it existed for walked past — see [`docs/SILENT_WRONGNESS.md`](docs/SILENT_WRONGNESS.md), "A THIRD pattern".
 
 **These are development-signal numbers, not results.** Seven labelled items is far below the
 composition gate, `arag-eval validate` says `NOT YET PUBLISHABLE`, and the per-stratum

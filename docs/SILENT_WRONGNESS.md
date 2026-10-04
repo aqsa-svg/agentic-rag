@@ -636,6 +636,54 @@ detecting nothing, and a test pinning hole 3 above.
 
 ---
 
+## A THIRD pattern — the check structurally unable to catch what it exists for
+
+Three times now, and that is enough to name it. Distinct from both earlier patterns:
+instances 1-10 are code that is wrong, the second pattern is code that is right and unread,
+and this is a **guard that is working perfectly on the wrong question.** It reports success,
+it is green, it is tested — and the thing it was built to catch walks past it.
+
+It is the most dangerous of the three, because a green guard is read as evidence.
+
+### The three occurrences
+
+| # | the guard | what it checked | what it was for | how long it was green |
+|---|---|---|---|---|
+| 1 | `test_import_boundaries.py` | **direct** imports, per file | the online bundle not reaching PyMuPDF | the whole life of the project, while the boundary was broken (instance 7) |
+| 2 | `v1_baseline` gate, `min_recall_at_k: 0.30` | a floor derived from a measurement taken through a blind matcher | catching a retrieval regression | every run, while a change destroying one item entirely would have scored 0.300 and **passed** (instance 9) |
+| 3 | the v4 rerank script's `EARNS IT` verdict | `nDCG gain > 0` | DESIGN §5.5's *"nDCG must justify its 60ms"* | one run — caught by reading the number against the design rather than trusting the label beside it |
+
+### The third, in detail
+
+The v4 measurement printed **`EARNS IT`** for both reranked configurations. Measured cost
+was **~3,900ms against a 60ms budget** — 65× over, and more than the entire 2.5s
+flat-lookup p95 allowance consumed by one stage. The verdict was not a lie about the data;
+every number it printed was correct. It was a lie about the *criterion*, because the script
+asserted a threshold the design never set.
+
+A quality gain of +0.070 nDCG is real and worth having. A script that calls it "earned"
+against an invented bar converts a split verdict — *good quality, unshippable latency* —
+into a single misleading word, and the word is the part a tired reader takes away.
+
+### What the three have in common, and the practice
+
+None of them failed. None of them had a bug in the sense of producing a wrong value. Each
+one answered a question correctly, and the question was not the one that mattered:
+
+* *direct* imports, not the import **closure**
+* a floor from the measured number, not from a **valid** measured number
+* `gain > 0`, not `gain > 0 at a cost under the budget`
+
+The producer was fine in all three. The *specification* of the check was wrong, and nothing
+tests a specification.
+
+The only defence that has actually worked here is **mutation testing** — reintroduce the
+defect, confirm the guard fails. A guard never observed failing is a guard whose question
+has never been verified. That is practice 12 in the list below, and it was written after
+occurrence 1; occurrences 2 and 3 both predate its application to the thing they guarded.
+
+---
+
 ## What this pattern implies for how the project is built
 
 Not "write more tests". These bugs passed their tests. The specific practices that caught
@@ -710,6 +758,13 @@ them, and that are now structural rather than remembered:
    the prompt asks for. The model emitted the string `"null"`. Sixty tests covered this
    engine and the first real call found two defects, because a stub returns exactly what
    its author pictured. Run the real thing early, with a cheap model if necessary.
+
+15. **A guard's VERDICT must be checked against the written criterion, not against
+   intuition.** Three guards in this project were green while the thing they existed for
+   walked past, and all three answered a subtly different question than the one the design
+   asked. Before trusting a pass, re-read what the design actually requires and confirm the
+   assertion encodes *that* - `nDCG > 0` and `nDCG > 0 within 60ms` differ by one clause and
+   by the entire conclusion.
 
 The through-line: **prefer a loud failure to a plausible output, at every layer.** Ingest
 raises rather than emit a header-less table chunk. Validation refuses rather than accept a
