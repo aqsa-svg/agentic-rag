@@ -96,6 +96,70 @@ def _load_thresholds(path: Path | None) -> Thresholds:
         raise typer.Exit(2) from exc
 
 
+@app.command("import-xlsx")
+def import_xlsx(
+    xlsx: Annotated[Path, typer.Argument(help="The labelling workbook to read.")],
+    golden: Annotated[Path | None, typer.Option(help="Golden JSONL to write.")] = None,
+    dry_run: Annotated[
+        bool, typer.Option(help="Parse and report without writing the JSONL.")
+    ] = False,
+) -> None:
+    """Read the labelling spreadsheet back into the golden set, then validate it.
+
+    The spreadsheet is where labelling actually happens - reading six PDFs and typing
+    findings is not a JSONL activity - but JSONL stays the storage format, so this is a
+    one-way gate rather than a second source of truth.
+
+    **A malformed row fails exactly as it would in the file.** The row is assembled into
+    the same dict the JSONL loader builds and handed to `GoldenItem`; the schema is not
+    reimplemented here, so the rules, the messages and the strictness are identical. The
+    only extra checks are the ones the spreadsheet format introduces and the schema cannot
+    see: the span columns are positional and must align.
+
+    Exit 2 on any bad row - nothing is written when one row is unusable, because a partial
+    import leaves the golden set in a state nobody chose.
+    """
+    configure_logging()
+    from arag.eval.xlsx import read_xlsx, write_jsonl
+
+    target = golden or settings().golden_path
+    try:
+        items, problems = read_xlsx(xlsx)
+    except Exception as exc:
+        typer.secho(f"  cannot read {xlsx}: {exc}", fg=typer.colors.RED)
+        raise typer.Exit(2) from exc
+
+    typer.echo(f"\n  {len(items)} complete item(s) in {xlsx.name}")
+    if problems:
+        typer.secho(f"  {len(problems)} unusable row(s):", fg=typer.colors.RED)
+        for problem in problems:
+            typer.secho(f"    ! {problem}", fg=typer.colors.RED)
+        typer.secho(
+            "\n  Nothing written. A partial import leaves the golden set in a state nobody chose.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(2)
+
+    ids = [i.id for i in items]
+    duplicates = sorted({i for i in ids if ids.count(i) > 1})
+    if duplicates:
+        typer.secho(f"  duplicate id(s): {duplicates}", fg=typer.colors.RED)
+        raise typer.Exit(2)
+
+    if dry_run:
+        typer.secho("  --dry-run: parsed cleanly, nothing written.", fg=typer.colors.GREEN)
+        return
+
+    header = ""
+    if target.exists():
+        existing = target.read_text(encoding="utf-8").splitlines()
+        header = "\n".join(line for line in existing if line.startswith("#"))
+    write_jsonl(target, items, header)
+    typer.secho(f"  wrote {len(items)} item(s) -> {target}", fg=typer.colors.GREEN)
+    typer.echo("  now validating, same as `arag-eval validate`:")
+    validate(golden=target, index_path=None, resolve=True)
+
+
 @app.command()
 def validate(
     golden: Annotated[Path | None, typer.Option(help="Path to the golden JSONL.")] = None,

@@ -37,6 +37,8 @@ dev = [
     "pytest-cov>=5",
     "ruff>=0.5",
     "mypy>=1.10",
+    # Labelling happens in a spreadsheet; arag-eval import-xlsx reads it back.
+    "openpyxl>=3.1",
     "types-PyYAML>=6.0",
 ]
 
