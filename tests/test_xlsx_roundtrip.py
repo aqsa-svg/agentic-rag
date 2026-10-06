@@ -216,3 +216,51 @@ class TestWriteThenRead:
         assert [i.model_dump(mode="json") for i in back] == [
             i.model_dump(mode="json") for i in items
         ], "the pending row must be skipped, the complete ones must survive"
+
+class TestExpectedFailureColumns:
+    """`expected_to_fail` is the one column that RELAXES a gate, so it reads strictly.
+
+    Added when h-32 and h-33 were labelled: both are supersession-by-deletion items whose
+    evidence shares no vocabulary with the question, so they are known failures rather than
+    mysteries. Without these columns the sheet could not express that and the flag would
+    have had to be set in the JSONL by hand - two sources of truth for one field, which is
+    what the importer exists to prevent.
+    """
+
+    def test_the_flag_and_its_reason_survive_a_round_trip(self) -> None:
+        original = item(
+            expected_to_fail=True,
+            expected_failure_reason="no lexical overlap between question and evidence page",
+        )
+        row = item_to_row(original)
+        assert row["expected_to_fail"] == "TRUE"
+        back = row_to_item(row, row_number=2)
+        assert back is not None
+        assert back.model_dump(mode="json") == original.model_dump(mode="json")
+
+    @pytest.mark.parametrize("typed", ["TRUE", "true", "yes", "Y", "1", True])
+    def test_the_spellings_a_labeller_actually_types(self, typed: object) -> None:
+        back = row_to_item(
+            {**item_to_row(item()), "expected_to_fail": typed, "expected_failure_reason": "r"},
+            row_number=2,
+        )
+        assert back is not None and back.expected_to_fail
+
+    @pytest.mark.parametrize("typed", ["", None, "FALSE", "no", "0", False, "   "])
+    def test_anything_else_is_false_rather_than_an_error(self, typed: object) -> None:
+        """Deliberately not strict, and only safe in this direction.
+
+        An unrecognised cell marking an item as a known failure would silently excuse a
+        real regression. An unrecognised cell leaving it false costs a confusing schema
+        error at worst, on a row the labeller is already looking at.
+        """
+        back = row_to_item({**item_to_row(item()), "expected_to_fail": typed}, row_number=2)
+        assert back is not None and not back.expected_to_fail
+
+    def test_the_flag_without_a_reason_is_still_refused_by_the_schema(self) -> None:
+        """The sheet adds a column; it does not add an exemption."""
+        with pytest.raises(XlsxRowError, match="expected_failure_reason"):
+            row_to_item(
+                {**item_to_row(item()), "expected_to_fail": "TRUE", "expected_failure_reason": ""},
+                row_number=2,
+            )

@@ -49,6 +49,8 @@ COLUMNS = (
     "page",
     "clause_id",
     "must_not_cite",
+    "expected_to_fail",
+    "expected_failure_reason",
     "notes",
     "authored_by",
     "as_of_date",
@@ -85,6 +87,21 @@ def _split_positional(value: Any) -> list[str]:
         return []
     text = str(value).strip()
     return [p.strip() for p in text.split(SEP)] if text else []
+
+
+def _truthy(value: Any) -> bool:
+    """A spreadsheet boolean, which arrives in whatever form the labeller typed.
+
+    openpyxl returns a real `bool` for a cell Excel stored as one, and a string for a cell
+    someone typed "TRUE" or "yes" into. Anything unrecognised is FALSE rather than an
+    error, deliberately: `expected_to_fail` only ever relaxes a gate, so a cell nobody
+    filled in must not quietly mark an item as a known failure. The schema still refuses
+    a true value with no `expected_failure_reason`.
+    """
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip().lower() if value is not None else ""
+    return text in {"true", "yes", "y", "1"}
 
 
 def _cell(value: Any) -> str | None:
@@ -175,6 +192,11 @@ def row_to_item(row: dict[str, Any], *, row_number: int) -> GoldenItem | None:
     forbidden = _split(row.get("must_not_cite"))
     if forbidden:
         payload["must_not_cite"] = forbidden
+    if _truthy(row.get("expected_to_fail")):
+        payload["expected_to_fail"] = True
+    reason = _cell(row.get("expected_failure_reason"))
+    if reason:
+        payload["expected_failure_reason"] = reason
 
     try:
         return GoldenItem(**payload)
@@ -195,6 +217,8 @@ def item_to_row(item: GoldenItem) -> dict[str, Any]:
         "page": SEP.join(str(s.page or "") for s in item.ground_truth_spans),
         "clause_id": SEP.join(s.clause_id or "" for s in item.ground_truth_spans),
         "must_not_cite": SEP.join(item.must_not_cite),
+        "expected_to_fail": "TRUE" if item.expected_to_fail else "",
+        "expected_failure_reason": item.expected_failure_reason or "",
         "notes": item.notes or "",
         "authored_by": item.authored_by.value,
         "as_of_date": item.as_of_date.isoformat() if item.as_of_date else "",
@@ -285,6 +309,8 @@ def write_xlsx(path: Path, items: list[GoldenItem], pending: list[dict[str, Any]
         "page": 10,
         "clause_id": 18,
         "must_not_cite": 34,
+        "expected_to_fail": 14,
+        "expected_failure_reason": 44,
         "notes": 44,
         "authored_by": 14,
         "as_of_date": 12,
