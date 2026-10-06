@@ -239,3 +239,24 @@ Stated plainly because the harness's own limitations are part of understanding i
 - **RAGAS not yet wired.** The runner scores retrieval and behaviour; the four RAGAS
   metrics land in v1 when there is generation to score.
 - **The PR gate never touches a real database.** See LIMITATIONS.md.
+- **One `concept_id` per item, but `clause_tension` items span two kinds of clause.**
+  Open; not being fixed yet. The schema carries a single `concept_id` and the resolver
+  checks it against **every** span, so an item whose spans are deliberately of different
+  kinds has no correct value to put there.
+
+  Worked example, h-21. Its two spans are star-comprehensive-2025 p35 `excl.32` ("Dental
+  treatment or surgery ... except to the extent covered under Section II.17") and p16
+  clause 17, the out-patient dental **benefit** that the exclusion cross-references. The
+  tension *is* the pair; dropping either span removes the item's reason to exist.
+  `exclusion.permanent` is wrong about p16 and `benefit.dental_opd` is, strictly, wrong
+  about p35.
+
+  h-21 resolves today only because the exclusion happens to use the benefit's words, so
+  the `"dental treatment"` anchor reaches both pages. That is luck, not mechanism: an
+  insurer wording the same exclusion as "dental surgery" would break it, and the next
+  `clause_tension` item is as likely to fall the other way.
+
+  The fix would be to move `concept_id` onto the span rather than the item. It is not being
+  made now, on purpose - with one item in the stratum, a schema change would be designed
+  against a single example. The decision waits until the remaining four land and show
+  whether per-span concepts are the general shape or whether h-21 is the odd one.

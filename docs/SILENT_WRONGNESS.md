@@ -5,7 +5,7 @@ can be extended each time another instance turns up.*
 
 ---
 
-Ten bugs found in this project so far share a single shape, and it is not the shape
+Eleven bugs found in this project so far share a single shape, and it is not the shape
 most testing is built to catch:
 
 > **The code runs. Nothing errors. The output looks right. It is wrong.**
@@ -505,6 +505,53 @@ abstain, five genuine answers survive.
 
 ---
 
+## Instance 11 — a command that wrote first and validated second
+
+`arag-eval import-xlsx` reads the labelling spreadsheet into `data/golden/v1.jsonl`. Its
+docstring has always said:
+
+> Exit 2 on any bad row - nothing is written when one row is unusable, because a partial
+> import leaves the golden set in a state nobody chose.
+
+The implementation wrote the JSONL, *then* called `validate()` on it. So an import of five
+merged rows wrote 10 items to disk, then printed three of them as UNUSABLE and exited 2.
+The golden set was left holding exactly the items the validator had just rejected.
+
+### Why this one is not a near-miss
+
+Everything downstream of the golden set reads the file, not the exit code. `arag-eval run`
+loads `v1.jsonl` and scores against whatever spans are in it. A span on the wrong page does
+not error - it scores zero forever, in the denominator, for every future run. The window
+between a failed import and someone noticing is a window in which every metric is wrong in
+a direction nobody can see, and the only thing holding it shut was a human reading an exit
+code in a terminal they had already scrolled past.
+
+Found by the user, not by me, and not by any test: *"You described this as all-or-nothing.
+The behaviour doesn't match the claim."* The claim and the code had sat next to each other
+in the same function since the command was written.
+
+### Fix
+
+Write to `v1.jsonl.staged`, validate **that**, and `Path.replace()` it onto the target only
+on success - an atomic rename on both POSIX and Windows. The staged file is removed in a
+`finally`, so a crash mid-validation leaves neither a corrupt golden set nor a second
+unvalidated copy of it beside the first.
+
+### The test, and what it had to be able to fail
+
+`tests/test_import_atomicity.py`. The bad row is bad in a way **only corpus resolution can
+see** - well-formed schema, clause on the wrong page - because a schema-level failure was
+already refused before any write happened, so a test built on one would have passed against
+the broken ordering. Mutation-checked: restoring `staged = target` makes two of the six
+tests fail, including the positive control that proves the command still writes.
+
+The general lesson is the one this document keeps arriving at from different directions: a
+docstring describing a guarantee is not the guarantee. This one was a *correct* description
+of intended behaviour, written by the same person, in the same file, four lines above the
+code that contradicted it.
+
+---
+
 ## A SECOND pattern — the signal produced and never consumed
 
 Instances 1-9 share one shape: code that was **wrong**. This is a different shape and it
@@ -639,7 +686,7 @@ detecting nothing, and a test pinning hole 3 above.
 ## A THIRD pattern — the check structurally unable to catch what it exists for
 
 Three times now, and that is enough to name it. Distinct from both earlier patterns:
-instances 1-10 are code that is wrong, the second pattern is code that is right and unread,
+instances 1-11 are code that is wrong, the second pattern is code that is right and unread,
 and this is a **guard that is working perfectly on the wrong question.** It reports success,
 it is green, it is tested — and the thing it was built to catch walks past it.
 

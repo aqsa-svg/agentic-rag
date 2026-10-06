@@ -41,8 +41,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -164,19 +162,23 @@ class TestSupersessionDefenceIsHonestlyRecorded:
             "docs/BASELINE_V1R.md which currently records the hole."
         )
 
-    def test_no_label_guards_against_citing_the_SUPERSEDED_wording(self) -> None:
-        """Hole 2, stated precisely rather than approximately.
+    def test_a_label_guards_against_citing_the_SUPERSEDED_wording(self) -> None:
+        """Hole 2, CLOSED 2026-10-06 by h-14 - so this test was turned around.
 
-        An earlier version of this test asserted "no item carries must_not_cite" and was
-        wrong: h-23 and h-24 carry seven entries each. Those are ABSTENTION DECOYS - the
-        day-care and OPD clauses a retriever is expected to surface for an unanswerable
-        question - and they guard a different failure entirely.
+        It used to assert the hole was still open and to fail the moment a label closed it,
+        with instructions to delete it. Deleting would have left the property unguarded in
+        the other direction: `must_not_cite` is what makes `max_supersession_violations` a
+        measurement rather than a formality, and an item losing it during a relabel would
+        make the metric vacuous again silently - the gate would go on passing, for the
+        reason it passed before.
 
-        What no label does is name a SUPERSEDED DOCUMENT. So
-        ``max_supersession_violations: 0`` passes for h-01 not because the system avoided
-        the 2021 wording, but because nothing asked it to: h-01 retrieves
-        ``star-comprehensive-2021 p3 def.hospital`` at rank 1 under BM25 and the gate is
-        silent. The metric runs; the measurement is empty.
+        h-14 names `star-comprehensive-2021`, whose `excl.33` excludes sleep-apnea
+        treatment that the 2025 wording REVERSES into a bariatric qualifier. Answering from
+        the superseded wording gives the opposite answer, not a stale one.
+
+        Not asserted here: that the system survives the trap. It is a label, not a defence -
+        `AbstainReason.ONLY_SUPERSEDED_EVIDENCE` is still produced by nothing, which the
+        test above holds open.
         """
         from arag.eval.schema import GoldenSet
 
@@ -187,9 +189,10 @@ class TestSupersessionDefenceIsHonestlyRecorded:
             for item in golden.items
             if any(entry.split("#")[0] in superseded for entry in item.must_not_cite)
         ]
-        if guarded:
-            pytest.fail(
-                f"items {guarded} now guard against citing a superseded wording, so the "
-                "supersession metric is no longer vacuous. Delete this test and update "
-                "docs/BASELINE_V1R.md, which currently records the hole."
-            )
+        assert guarded, (
+            "no label names a superseded document any more, so "
+            "`max_supersession_violations: 0` is vacuous again - it passes because nothing "
+            "can violate it. h-14 carried this guard when it was written; if it was "
+            "relabelled, restore the must_not_cite or re-record the hole in "
+            "docs/BASELINE_V1R.md."
+        )

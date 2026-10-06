@@ -154,10 +154,36 @@ def import_xlsx(
     if target.exists():
         existing = target.read_text(encoding="utf-8").splitlines()
         header = "\n".join(line for line in existing if line.startswith("#"))
-    write_jsonl(target, items, header)
+
+    # VALIDATE FIRST, WRITE SECOND. The original order was write-then-validate, which
+    # contradicted this command's own documented promise - "nothing is written if any row
+    # is bad, because a partial import leaves the golden set in a state nobody chose".
+    #
+    # It was not hypothetical. An import of five merged rows wrote 10 items to disk, then
+    # reported three of them UNUSABLE and exited non-zero. The file was left holding items
+    # the validator had just rejected, and the only thing standing between that and a bad
+    # measurement was someone reading the exit code.
+    #
+    # Validation needs a file to read, so the candidate is written to a TEMPORARY path and
+    # promoted only on success. A doc comment is not a mechanism; this is.
+    staged = target.with_suffix(target.suffix + ".staged")
+    write_jsonl(staged, items, header)
+    try:
+        typer.echo("  validating before writing, same checks as `arag-eval validate`:")
+        try:
+            validate(golden=staged, index_path=None, resolve=True)
+        except typer.Exit as exc:
+            if exc.exit_code:
+                typer.secho(
+                    f"\n  NOTHING WRITTEN. {target.name} is unchanged - fix the rows above "
+                    "and import again.",
+                    fg=typer.colors.RED,
+                )
+                raise
+        staged.replace(target)
+    finally:
+        staged.unlink(missing_ok=True)
     typer.secho(f"  wrote {len(items)} item(s) -> {target}", fg=typer.colors.GREEN)
-    typer.echo("  now validating, same as `arag-eval validate`:")
-    validate(golden=target, index_path=None, resolve=True)
 
 
 @app.command()

@@ -118,8 +118,14 @@ same regression now fails.
   outside the top 10 under both BM25 and dense. This is now the only labelled item that
   retrieves nothing under dense, and it is the cleanest diagnosis target in the set.
   Deliberately left failing.
-- **`max_supersession_violations: 0` is still vacuous.** No label carries a `must_not_cite`,
-  so nothing can violate it. h-01 still returns the superseded 2021 definition at rank 1
-  under BM25 and the gate still passes.
+- ~~**`max_supersession_violations: 0` is still vacuous.** No label carries a
+  `must_not_cite`, so nothing can violate it.~~ **Closed 2026-10-06 by h-14**, which names
+  `star-comprehensive-2021` - where `excl.33` excludes sleep-apnea treatment that the 2025
+  wording reverses into a bariatric qualifier. The metric now has something to violate.
+  The measured numbers above were taken while it was still vacuous and are NOT restated;
+  h-01 still returns the superseded 2021 definition at rank 1 under BM25, and h-01 itself
+  still carries no `must_not_cite`, so the gate still passes for it. What changed is that
+  the metric is no longer vacuous for the SET - not that supersession is defended. Nothing
+  produces `AbstainReason.ONLY_SUPERSEDED_EVIDENCE`.
 - **The composition shortfall is unchanged:** 7 of 120 items. These remain
   development-signal numbers and must not be quoted as results.

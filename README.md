@@ -82,7 +82,7 @@ because no label carries a `must_not_cite`.
 
 ## What this project is actually about
 
-### Ten silent-wrongness instances, found and recorded
+### Eleven silent-wrongness instances, found and recorded
 
 [`docs/SILENT_WRONGNESS.md`](docs/SILENT_WRONGNESS.md) — bugs sharing one shape:
 
@@ -190,7 +190,7 @@ mistake cost a full verification run.
 | | |
 |---|---|
 | [`docs/DESIGN.md`](docs/DESIGN.md) | architecture, 15 strata, trade-offs with the rejected alternative named |
-| [`docs/SILENT_WRONGNESS.md`](docs/SILENT_WRONGNESS.md) | ten instances, two patterns, fourteen practices |
+| [`docs/SILENT_WRONGNESS.md`](docs/SILENT_WRONGNESS.md) | eleven instances, three patterns, fifteen practices |
 | [`LIMITATIONS.md`](LIMITATIONS.md) | what does not work, measured |
 | [`docs/BASELINE_V1R.md`](docs/BASELINE_V1R.md) | the frozen baseline, and why it was re-frozen |
 | [`docs/V2_MEASUREMENT.md`](docs/V2_MEASUREMENT.md) | dense + hybrid, corrected in place with the original struck |

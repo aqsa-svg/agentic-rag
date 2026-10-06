@@ -157,6 +157,12 @@ class Concept(StrEnum):
     BENEFIT_VACCINATION = "benefit.vaccination"
     BENEFIT_PRE_POST_HOSP = "benefit.pre_and_post_hospitalisation"
 
+    # Added 2026-10-06 while labelling h-21 (clause_tension). The vocabulary had no member
+    # for out-patient dental cover, so a span on the Star dental benefit clause could only
+    # be labelled with a concept that was wrong about it. See CONCEPT_ANCHORS for the
+    # measurement that chose its anchors.
+    BENEFIT_DENTAL_OPD = "benefit.dental_opd"
+
     # --- limits and deductions (where the tables live) ---
     LIMIT_ROOM_RENT = "limit.room_rent"
     LIMIT_ICU = "limit.icu_charges"
@@ -252,6 +258,25 @@ CONCEPT_ANCHORS: dict[Concept, tuple[str, ...]] = {
         "immunisation",
         "immunization",
     ),
+    # Measured across all six documents BEFORE these anchors were kept, because an anchor
+    # set that matches everything confirms nothing. The union of the three reaches exactly
+    # the dental footprint of each document - the DEFINITION, the BENEFIT clause and the
+    # EXCLUSION - and nothing else:
+    #
+    #   star-comprehensive-2025   [4 def, 16 benefit cl.17, 35 excl.32]
+    #   star-comprehensive-2021   [3 def, 5  benefit Sec 3, 11 excl.32]
+    #   nivabupa-reassure2        [2 def, 18 exclusion]
+    #   nivabupa-rise             [2 def, 16 exclusion]
+    #   irdai-annexure-2024       []        irdai-master-circular-2024  []
+    #
+    # For contrast, a bare "dental" anchor reaches 11 pages of star-2025 and 8 of star-2021.
+    # THAT would be a catch-all; this is a footprint.
+    #
+    # The namespace says `benefit.` while "dental treatment" also reaches the exclusion and
+    # the definition. That is deliberate and already precedented - BENEFIT_MATERNITY anchors
+    # on "maternity", which reaches WAIT_MATERNITY's clause too. The concept check asks "is
+    # this page about this subject", not "is this clause of this kind".
+    Concept.BENEFIT_DENTAL_OPD: ("out-patient dental", "dental treatment", "licensed dentist"),
     Concept.BENEFIT_PRE_POST_HOSP: (
         "pre-hospitalisation",
         "post-hospitalisation",
@@ -307,7 +332,18 @@ CONCEPT_ANCHORS: dict[Concept, tuple[str, ...]] = {
     Concept.PROC_PORTABILITY: ("portability",),
     Concept.PROC_FREE_LOOK: ("free look", "free-look"),
     Concept.PROC_MORATORIUM: ("moratorium", "moratorium period", "excl 04"),
-    Concept.EXCLUSION_PERMANENT: ("permanent exclusion", "exclusions"),
+    # "code excl" added 2026-10-06. The section HEADER ("Permanent Exclusions") sits on
+    # star-comprehensive-2025 p30-31, and the numbered list runs on to p32-35 without
+    # repeating the word - p35 says "exclusion" singular, which the plural anchor misses.
+    # So three labels on genuine permanent exclusions (excl.06 p33, excl.08 p33, excl.32
+    # p35) were rejected by the concept cross-check as "almost certainly on the wrong page"
+    # when the page was right and the anchor was too narrow.
+    #
+    # Measured before widening: 6, 9, 7, 9, 1, 4 pages across the six documents.
+    # Measured after:          10, 9, 7, 9, 1, 4 - exactly +[32, 33, 34, 35] in star-2025
+    # and NO change anywhere else. A broadened anchor set that matches everything confirms
+    # nothing, so the widening was measured before it was kept.
+    Concept.EXCLUSION_PERMANENT: ("permanent exclusion", "exclusions", "code excl"),
 }
 
 
