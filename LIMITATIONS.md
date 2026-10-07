@@ -220,6 +220,38 @@ Measured in spike S5 (`docs/INGEST_FINDINGS.md`), fixes scheduled for v1 ingest:
 | Interleaved prose columns | 4 pages, all in `star-comprehensive-2021` | Clauses from different columns are spliced. Reads fluently, is wrong. |
 | Soft hyphens / NBSP | 2 / 58 | Split words break exact matching. |
 
+## `def.<term>` extraction is typographic, so the key is Star-only in practice
+
+Measured 2026-10-07 while preparing h-40, and it qualifies a principle rather than noting a
+bug. Full account and the restated principle in `docs/DESIGN.md`.
+
+The index extracts defined terms with a line-anchored `Term: ` pattern. Star typesets
+definitions that way; **Niva Bupa numbers them** (`2.1.36. Room Rent means…`), so the
+pattern never fires on a real Niva definition. What it does fire on is page furniture:
+
+| document | `def.*` ids | what they mostly are |
+|---|---|---|
+| `star-comprehensive-2021` / `-2025` | 82 / 81 | real defined terms |
+| `nivabupa-rise` / `-reassure2` | 27 / 30 | `def.product_name` on **34 of 34 pages**, `def.note`, `def.fax`, `def.email` |
+
+Two consequences, and the second is the one that bites:
+
+1. A labeller writing `nivabupa-rise#def.room_rent` gets a load error — annoying, loud,
+   harmless. Writing `nivabupa-rise#def.product_name` gets an id that validates and
+   resolves to every page in the document. Partly guarded: a span on an id appearing on
+   more than five pages draws the AMBIGUOUS warning.
+2. It is not clean inside Star either. `def.reasonable_and_customary_charges` resolves for
+   `star-comprehensive-2021` and for **no other document**, though all four insurer
+   wordings define the term — in the 2025 wording the term shares a line with a page
+   header, and the pattern is line-anchored. The same term, two versions of one product,
+   one key.
+
+Not fixed. Fixing it means teaching the extractor Niva's numbered-definition convention,
+which is a per-insurer rule in a component whose value is being insurer-agnostic. The
+cheaper guard is the one now stated in DESIGN: **check that the id exists in both documents
+before any cross-insurer item relies on it.** `excl.NN` needs no such check, because the
+regulator mandates the literal string rather than the layout.
+
 ## Superscript-marker numeric corruption: guarded, not observed
 
 A footnote marker fused onto a monetary value (`5,00,000/-¹` → `5,00,0001`) would be a

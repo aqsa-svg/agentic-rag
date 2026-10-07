@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-06T16:37:48+00:00",
+  "generated_at": "2026-10-07T05:58:37+00:00",
   "note": "Derived from the corpus by `arag-ingest clause-index`. Contains identifiers and page numbers only, never document text, so it commits without redistributing copyrighted material.",
   "documents": {
     "irdai-annexure-2024": {
@@ -3102,6 +3102,45 @@
             "def.product_name"
           ]
         },
+        "limit.reasonable_and_customary": {
+          "pages": [
+            4,
+            13,
+            18
+          ],
+          "clauses": [
+            "2.1.26",
+            "2.1.27",
+            "2.1.28",
+            "2.1.29",
+            "2.1.30",
+            "2.1.31",
+            "2.1.32",
+            "2.1.36",
+            "2.1.37",
+            "2.1.38",
+            "4.15.3",
+            "4.16",
+            "4.16.1",
+            "4.16.2",
+            "4.16.3",
+            "4.17",
+            "4.17.1",
+            "4.17.2",
+            "4.17.3",
+            "5.2.3",
+            "5.2.4",
+            "5.2.5",
+            "5.2.6",
+            "5.2.7",
+            "def.claim_safeguard",
+            "def.dental_treatment",
+            "def.external_congenital_anomaly",
+            "def.note",
+            "def.product_name",
+            "def.sum_insured_safeguard"
+          ]
+        },
         "limit.room_rent": {
           "pages": [
             5,
@@ -5255,6 +5294,42 @@
             "2.1.22",
             "2.1.23",
             "2.1.24",
+            "def.product_name"
+          ]
+        },
+        "limit.reasonable_and_customary": {
+          "pages": [
+            4,
+            9,
+            17
+          ],
+          "clauses": [
+            "2.1.25",
+            "2.1.26",
+            "2.1.27",
+            "2.1.28",
+            "2.1.29",
+            "2.1.30",
+            "2.1.31",
+            "2.1.32",
+            "2.1.33",
+            "2.1.34",
+            "2.1.35",
+            "2.1.36",
+            "2.1.37",
+            "4.2.3",
+            "4.2.4",
+            "4.2.5",
+            "7.2.5",
+            "7.2.6",
+            "7.2.7",
+            "7.2.8",
+            "8",
+            "8.1",
+            "8.1.1",
+            "8.1.2",
+            "def.list_of_tests_covered",
+            "def.note",
             "def.product_name"
           ]
         },
@@ -8418,6 +8493,48 @@
             "def.unproven_experimental_treatment"
           ]
         },
+        "limit.reasonable_and_customary": {
+          "pages": [
+            4
+          ],
+          "clauses": [
+            "1",
+            "def.associated_medical_expenses",
+            "def.ayush_treatment",
+            "def.basic_sum_insured",
+            "def.company",
+            "def.dependent_child",
+            "def.diagnosis",
+            "def.hazardous_sport_hazardous_activities",
+            "def.icu_charges",
+            "def.instalment",
+            "def.insured_person",
+            "def.limit_of_coverage",
+            "def.maternity_expenses",
+            "def.medical_advice",
+            "def.medical_expenses",
+            "def.medical_practitioner",
+            "def.medically_necessary_treatment",
+            "def.migration",
+            "def.network_provider",
+            "def.new_born_baby",
+            "def.non_network_provider",
+            "def.notification_of_claim",
+            "def.opd_treatment",
+            "def.portability",
+            "def.post_hospitalization_medical_expenses",
+            "def.pre_existing_disease",
+            "def.pre_hospitalization_medical_expenses",
+            "def.private_single_a_c_room",
+            "def.qualified_nurse",
+            "def.reasonable_and_customary_charges",
+            "def.renewal",
+            "def.room_rent",
+            "def.sum_insured",
+            "def.surgery_or_surgical_procedure",
+            "def.unproven_experimental_treatment"
+          ]
+        },
         "limit.room_rent": {
           "pages": [
             2,
@@ -8737,6 +8854,27 @@
             "def.toll_free",
             "def.unproven_experimental_treatment",
             "def.website",
+            "excl.01",
+            "excl.02",
+            "excl.03"
+          ]
+        },
+        "pricing.tax_relief": {
+          "pages": [
+            16
+          ],
+          "clauses": [
+            "1",
+            "2",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "3",
+            "30",
+            "31",
+            "def.cumulative_bonus",
             "excl.01",
             "excl.02",
             "excl.03"
@@ -11241,6 +11379,24 @@
             "def.unproven_experimental_treatment"
           ]
         },
+        "limit.reasonable_and_customary": {
+          "pages": [
+            7
+          ],
+          "clauses": [
+            "def.associated_medical_expenses",
+            "def.basic_sum_insured",
+            "def.company_insurer_we_us",
+            "def.dependent_child",
+            "def.diagnosis",
+            "def.hazardous_sport_hazardous_activities",
+            "def.renewal",
+            "def.room_rent",
+            "def.specific_waiting_period",
+            "def.surgery_or_surgical_procedure",
+            "def.unproven_experimental_treatment"
+          ]
+        },
         "limit.room_rent": {
           "pages": [
             7,
@@ -11487,6 +11643,18 @@
             "def.zone_e",
             "excl.01",
             "excl.02"
+          ]
+        },
+        "pricing.tax_relief": {
+          "pages": [
+            45
+          ],
+          "clauses": [
+            "27",
+            "28",
+            "29",
+            "31",
+            "32"
           ]
         },
         "procedure.claim_notification": {

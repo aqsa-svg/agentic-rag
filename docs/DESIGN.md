@@ -459,7 +459,60 @@ identifier has to be stable. Measured across this corpus, exactly **two** identi
 | key | form | why it is portable |
 |---|---|---|
 | **IRDAI exclusion codes** | `excl.01` … `excl.38` | The regulator mandates the wording *and* the code, so `Code Excl 02` appears verbatim in both Star wordings (38 codes in the 2021 one, 35 in the 2025 one) and in the Niva Bupa wordings |
-| **Defined terms** | `def.hospital`, `def.grace_period` | A policy wording must define its terms, and the term itself is the identifier. Stable because the vocabulary is largely IRDAI-standardised |
+| **Defined terms** | `def.hospital`, `def.grace_period` | ~~A policy wording must define its terms, and the term itself is the identifier. Stable because the vocabulary is largely IRDAI-standardised~~ **QUALIFIED 2026-10-07 - portable in principle, Star-only in practice. See below.** |
+
+#### `def.<term>` is portable in principle and Star-only in practice
+
+Measured while preparing h-40, and it changes the claim above rather than footnoting it.
+
+A key is portable only to the degree that something outside the document controls it — and
+that control has **two** parts, not one. The regulator standardises the *vocabulary*: every
+wording here defines Hospital, Grace Period, Reasonable and Customary Charges. It does not
+standardise the *typography*, and the index extracts defined terms by typography:
+
+```python
+"definition": re.compile(r"^\s{0,6}([A-Z][A-Za-z][A-Za-z /&'-]{1,38}):\s")
+```
+
+A line that begins `Term: `. Star writes `Room Rent: Room Rent means the amount charged…`
+and the pattern fires. **Niva Bupa numbers its definitions** — `2.1.36. Room Rent means the
+amount charged…` — so the pattern never fires there, and the `numbered` pattern claims the
+line as `2.1.36` instead.
+
+The consequence is not that Niva has no `def.*` ids. It has 27 and 30. They are **the wrong
+ones**:
+
+| document | `def.*` ids | most widespread |
+|---|---|---|
+| `star-comprehensive-2021` | 82 | real defined terms |
+| `star-comprehensive-2025` | 81 | real defined terms |
+| `nivabupa-rise` | 27 | `def.product_name` on **34 of 34 pages**, `def.note` on 13, `def.fax`, `def.email` |
+| `nivabupa-reassure2` | 30 | `def.product_name` on **34 of 34 pages**, `def.note` on 12 |
+
+`def.product_name` is a page header. These are ids that look like defined terms, resolve to
+pages, validate on write, and mean nothing — the silent-wrongness shape, in the index this
+time.
+
+And it is not clean even inside Star. **`def.reasonable_and_customary_charges` exists for
+`star-comprehensive-2021` and for no other document in the corpus**, although all four
+insurer wordings define the term — in `star-comprehensive-2025` the term shares its line
+with a page header, so the line-anchored pattern misses it. The same term, in two versions
+of the same product, yields the key once.
+
+So the principle is restated at its true strength:
+
+> **A key imposed by the regulator is portable. A key the index happens to extract is not.**
+> `excl.NN` is portable because `Code Excl 02` is a mandated literal string that survives
+> any typographic choice. `def.<term>` is portable only where the insurer happens to
+> typeset definitions the way the extractor expects.
+
+**Before any cross-insurer item relies on `def.<term>`, check that the id exists in both
+documents.** `excl.NN` needs no such check; that is the whole difference between them.
+
+What this does not change: `def.<term>` remains the right key *within* the Star wordings,
+where the Definitions section carries no clause numbering at all and a definitional span
+would otherwise be page-keyed. It is a within-document and within-insurer key that was
+over-claimed as a cross-insurer one.
 
 Everything else is **structural, and structure is not portable**:
 

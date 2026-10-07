@@ -205,6 +205,22 @@ class Concept(StrEnum):
     EXCLUSION_GEOGRAPHIC_SCOPE = "exclusion.geographic_scope"
     PRICING_PREMIUM = "pricing.premium"
 
+    # Added 2026-10-07 for h-39 and h-40, both unanswerable. Each names a subject the
+    # corpus raises and does not settle, which is what an abstention item needs.
+    #
+    # pricing.tax_relief - the rupee tax saving. Both Star wordings state ELIGIBILITY for
+    #   relief under Section 80-D and stop; the limit is in the Income Tax Act, varies by
+    #   age and by who is covered, and appears in no document here. Kept separate from
+    #   pricing.premium (h-24) so two unanswerable items do not collapse into one concept
+    #   in a per-concept report - they fail for different reasons and should be countable
+    #   apart.
+    # limit.reasonable_and_customary - whether a specific bill will be paid in full. All
+    #   four insurer wordings define Reasonable and Customary Charges as a STANDARD and
+    #   none quantifies it; Niva defers further, to a provider tariff that is not in the
+    #   corpus.
+    PRICING_TAX_RELIEF = "pricing.tax_relief"
+    LIMIT_REASONABLE_AND_CUSTOMARY = "limit.reasonable_and_customary"
+
     @property
     def namespace(self) -> str:
         return self.value.split(".", 1)[0]
@@ -344,6 +360,18 @@ CONCEPT_ANCHORS: dict[Concept, tuple[str, ...]] = {
     # and NO change anywhere else. A broadened anchor set that matches everything confirms
     # nothing, so the widening was measured before it was kept.
     Concept.EXCLUSION_PERMANENT: ("permanent exclusion", "exclusions", "code excl"),
+    # Measured 2026-10-07 across all six documents before being kept.
+    #   "80-d"                    star-2021 [16], star-2025 [45], nothing elsewhere.
+    #   "reasonable and customary" star-2021 [4], star-2025 [7], reassure2 [4, 13, 18],
+    #                              rise [4, 9, 17], neither IRDAI document.
+    # Both are footprints rather than catch-alls: the phrase occurs where the subject is
+    # discussed and nowhere else. Neither concept is attached to a span today - h-39 and
+    # h-40 are abstention items and carry none - so these anchors are not yet load-bearing;
+    # they are curated now because the fallback for an uncurated concept is the slug's own
+    # words ("tax relief"), which match nothing in this corpus and would look like a
+    # missing concept rather than a missing anchor.
+    Concept.PRICING_TAX_RELIEF: ("80-d", "section 80-d"),
+    Concept.LIMIT_REASONABLE_AND_CUSTOMARY: ("reasonable and customary",),
 }
 
 
