@@ -574,14 +574,25 @@ class SetTargets(BaseModel):
     # largely been REGULATED OUT OF EXISTENCE. What survives is where an insurer wording
     # retains a pre-standardisation term.
     #
-    # The three, kept as the record of what the floor is based on:
+    # The survivors, kept as the record of what the floor is based on:
     #   1. cover during the grace period   star p41 cl.9 says NOT available;
     #                                      nivabupa-rise p18 cl.8.1.3 says it IS
     #   2. who submits claim documents     irdai circular p9 cl.17 says the policyholder
     #                                      "shall not be required to"; star p37-38 makes
     #                                      filing within 15 days a condition PRECEDENT
-    #   3. the same, with Niva             reassure2 p25 cl.6.2.4 / rise p23 cl.8.2.4 list
-    #                                      documents the claimant must supply
+    #
+    # LOWERED AGAIN 3 -> 2 on 2026-10-07. The third candidate was withdrawn on reading its
+    # text rather than its summary: nivabupa-reassure2 p25 cl.6.2.4 / rise p23 cl.8.2.4 say
+    # "Documents required with claim form:" followed by a list. That is a LIST HEADING on a
+    # form, not an obligation clause - it does not say the claimant must supply them, and a
+    # form convention does not disagree with a rule about who collects documents. It was
+    # offered as a candidate on the strength of a paraphrase; the paraphrase asserted a duty
+    # the document never states.
+    #
+    # Recorded rather than quietly dropped, because the error is instructive and is the one
+    # this project keeps finding: a summary that reads as a position when the source is
+    # silent. Two candidates survive, and #2's own premise is contested - see DESIGN on
+    # authority-override, which this taxonomy has no stratum for.
     #
     # Deliberately NOT done: widening to nivabupa-rise against nivabupa-reassure2. Two
     # products from one insurer disagreeing is not the failure this stratum exists to
@@ -590,7 +601,7 @@ class SetTargets(BaseModel):
     #
     # Revisit if a fifth insurer enters the corpus. The constraint is the corpus, not the
     # number, and not the labelling effort. Recorded in DESIGN and LIMITATIONS.
-    min_per_stratum: dict[Strata, int] = {Strata.SUPERSESSION: 5, Strata.CONTRADICTORY: 3}
+    min_per_stratum: dict[Strata, int] = {Strata.SUPERSESSION: 5, Strata.CONTRADICTORY: 2}
 
     def floor_for(self, stratum: Strata) -> int:
         return self.min_per_stratum.get(stratum, self.min_per_adversarial_stratum)

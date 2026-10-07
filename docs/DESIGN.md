@@ -453,7 +453,7 @@ in aspiration — and that claim is enforced by an import-linter test.
 
 Surveyed 2026-10-07, across every current document in the corpus, looking for two sources
 that disagree while both are in force. The `contradictory` stratum's floor was set at **5
-before anyone looked**. The survey found **three**.
+before anyone looked**. The survey found three, of which **two survived reading**.
 
 The reason is not that the labelling stopped early. IRDAI's 2024 master circular mandates
 the **wording**, not merely the substance, for grace period, free look, moratorium,
@@ -472,9 +472,18 @@ where an insurer wording retains a pre-standardisation term:
 |---|---|---|
 | cover during the grace period | `star-comprehensive-2025` p41 cl.9 — *not* available | `nivabupa-rise` p18 cl.8.1.3 — *is* available |
 | who submits claim documents | `irdai-master-circular-2024` p9 cl.17 — policyholder *"shall not be required to submit the documents"* | `star-comprehensive-2025` p37–38 — filing within 15 days, a condition **precedent to liability** |
-| the same, against Niva | as above | `nivabupa-reassure2` p25 cl.6.2.4, `nivabupa-rise` p23 cl.8.2.4 — documents the claimant must supply |
+| ~~the same, against Niva~~ | — | ~~`nivabupa-reassure2` p25 cl.6.2.4, `nivabupa-rise` p23 cl.8.2.4~~ **WITHDRAWN 2026-10-07** |
 
-**The floor was therefore lowered to 3 rather than filled.** Two options were available and
+The third was withdrawn on reading its text instead of its summary. Both Niva clauses read
+*"Documents required with claim form:"* followed by a list — a **list heading on a form**,
+not an obligation clause. It never says the claimant must supply them, so a form convention
+does not disagree with a rule about who collects documents. It had been offered as a
+candidate on the strength of a paraphrase that asserted a duty the document does not state.
+The floor went 3 → 2 rather than keeping a candidate that reads as a position only in
+summary — which is the failure mode this whole document is about, appearing in the survey
+that was meant to find it.
+
+**The floor was therefore lowered — to 3, then to 2 — rather than filled.** Two options were available and
 both were refused: widening to `nivabupa-rise` against `nivabupa-reassure2` — two products
 from one insurer, which is not the failure the stratum exists to catch — and relaxing what
 counts as a disagreement until five fit. A composition gate that can be satisfied by

@@ -610,7 +610,7 @@ class TestCompositionFloors:
     # moves without someone editing this table and recording why.
     EXPECTED_FLOORS: ClassVar[dict[Strata, int]] = {
         Strata.SUPERSESSION: 5,  # five attested mechanisms in this corpus, one item each
-        Strata.CONTRADICTORY: 3,  # corpus-limited: only three exist, surveyed 2026-10-07
+        Strata.CONTRADICTORY: 2,  # corpus-limited: two survive; C3 withdrawn 2026-10-07
         Strata.UNANSWERABLE: 5,
         Strata.INJECTION: 5,
     }
@@ -632,7 +632,7 @@ class TestCompositionFloors:
         identical from the outside, which is how a gate quietly stops gating.
         """
         shortfall = " ".join(SetTargets().shortfall(GoldenSet(items=[], source=Path("x"))))
-        assert "contradictory 0/3" in shortfall, shortfall
+        assert "contradictory 0/2" in shortfall, shortfall
 
     def test_the_total_and_human_floor_match_the_cut(self) -> None:
         """Pinned so the target cannot drift without someone editing this line.
