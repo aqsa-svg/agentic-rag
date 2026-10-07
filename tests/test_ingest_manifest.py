@@ -119,7 +119,12 @@ class TestShippedManifest:
         return Manifest.load(repo_root / "data" / "manifest" / "sources.jsonl")
 
     def test_loads(self, manifest: Manifest) -> None:
-        assert len(manifest.sources) == 6
+        # Six REAL documents plus one adversarial fixture. The split is asserted explicitly
+        # because the whole point of the fixture's separate kind is that it never gets
+        # counted among the real corpus by accident - see production_sources.
+        assert len(manifest.production_sources) == 6
+        assert len(manifest.adversarial_fixtures) == 2
+        assert len(manifest.sources) == 8
 
     def test_regulator_outranks_every_insurer_document(self, manifest: Manifest) -> None:
         """The IRDAI circular repeals 55 prior circulars and overrides insurer wording.
@@ -127,8 +132,10 @@ class TestShippedManifest:
         Encoding that as a comparable number is what lets the agent resolve a
         wording-versus-circular conflict instead of averaging two contradictory passages.
         """
-        regulator = [s for s in manifest.sources if s.publisher == "IRDAI"]
-        insurers = [s for s in manifest.sources if s.publisher != "IRDAI"]
+        # Partition the PRODUCTION sources: the adversarial fixture is rank 3 by design and
+        # is not an insurer document, so including it here would be comparing the wrong set.
+        regulator = [s for s in manifest.production_sources if s.publisher == "IRDAI"]
+        insurers = [s for s in manifest.production_sources if s.publisher != "IRDAI"]
         assert regulator, "the corpus must contain a regulator instrument"
         assert all(s.authority_rank == RANK_REGULATOR for s in regulator)
         assert all(s.authority_rank == RANK_INSURER for s in insurers)

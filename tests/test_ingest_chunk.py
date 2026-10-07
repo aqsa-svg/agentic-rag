@@ -548,13 +548,21 @@ class TestRealCorpus:
         to the nightly for no extra signal. The regions earn their cost in the refused-
         table test below, which is the only place they can tell us anything.
         """
+        from arag.ingest.manifest import Manifest
+
         pymupdf = pytest.importorskip("pymupdf")
         raw = repo_root / "data" / "raw"
         if not raw.exists() or not any(raw.glob("*.pdf")):
             pytest.skip("corpus not fetched")
 
-        pdfs = sorted(raw.glob("*.pdf"))
-        assert len(pdfs) == 6, "the manifest declares six sources"
+        # Only the PRODUCTION sources - the adversarial fixture PDF lives in data/raw too
+        # but is not part of the 197-page corpus, and ingesting it here would both break the
+        # page census and chunk a poisoned document in a test about real coverage.
+        manifest = Manifest.load(repo_root / "data" / "manifest" / "sources.jsonl")
+        pdfs = sorted(raw / f"{s.id}.pdf" for s in manifest.production_sources)
+        assert len(pdfs) == 6, "the manifest declares six production sources"
+        if not all(p.exists() for p in pdfs):
+            pytest.skip("production corpus not fully fetched")
 
         seen_ids: set[str] = set()
         total_pages = 0

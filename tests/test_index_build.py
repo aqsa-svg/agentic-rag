@@ -35,6 +35,7 @@ from arag.index.build import (
     uncovered_pages,
 )
 from arag.ingest.chunk_types import Chunk, ChunkKind
+from arag.ingest.manifest import Manifest
 from arag.retrieval.types import DocSpan, RetrievalFilters, RetrievedChunk
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -43,8 +44,15 @@ RAW_DIR = REPO_ROOT / "data" / "raw"
 
 # The corpus PDFs are gitignored (copyrighted, DESIGN §2), so the full-corpus tests are
 # skipped rather than failed where they are absent - a CI checkout has the manifest but
-# not the documents.
-CORPUS_PRESENT = MANIFEST.exists() and len(list(RAW_DIR.glob("*.pdf"))) == 6
+# not the documents. Presence is measured against the PRODUCTION sources, so the
+# adversarial fixture PDF (built locally into data/raw) neither satisfies nor breaks the
+# count - "6 real documents present" is the condition, by kind not by file tally.
+_PRODUCTION_IDS = (
+    {s.id for s in Manifest.load(MANIFEST).production_sources} if MANIFEST.exists() else set()
+)
+CORPUS_PRESENT = bool(_PRODUCTION_IDS) and all(
+    (RAW_DIR / f"{sid}.pdf").exists() for sid in _PRODUCTION_IDS
+)
 
 
 def make_chunk(
@@ -677,6 +685,36 @@ class TestFullCorpusBuild:
         assert corpus.report.pages_uncovered == {}
         # 2 headerless tables are known-refused on irdai-master-circular-2024 p10-p11.
         assert corpus.report.tables_refused >= 2
+
+    def test_the_adversarial_fixture_is_unreachable_from_the_default_corpus(self) -> None:
+        """A poisoned document must not reach a retriever by accident.
+
+        Right now the only thing between a payload and the index is that nobody wired it in.
+        That is not a guarantee: the fixture is declared in the manifest and its PDF is in
+        data/raw, so a `build_corpus` that iterated `sources` instead of `production_sources`
+        would chunk it and put four prompt-injection payloads one cosine-similarity away from
+        a user's question. This asserts the default build excludes it BY KIND, and that the
+        only way in is the deliberate `include_adversarial=True` opt-in.
+        """
+        pytest.importorskip("pymupdf")
+        pytest.importorskip("arag.ingest.chunk")
+        pytest.importorskip("arag.index.lexical")
+
+        fixtures = {s.id for s in Manifest.load(MANIFEST).adversarial_fixtures}
+        assert fixtures, "this test is vacuous unless the manifest declares a fixture"
+
+        default = build.build_corpus(MANIFEST, RAW_DIR, serialisation="markdown")
+        assert not (
+            {c.source_id for c in default.chunks.values()} & fixtures
+        ), "a fixture reached the default corpus - the production_sources exclusion is broken"
+
+        opted_in = build.build_corpus(
+            MANIFEST, RAW_DIR, serialisation="markdown", include_adversarial=True
+        )
+        assert {c.source_id for c in opted_in.chunks.values()} & fixtures, (
+            "include_adversarial=True did not surface the fixture - the opt-in is the only "
+            "path in, so if it does not work the fixture can never be evaluated at all"
+        )
 
     def test_row_nl_emits_far_more_table_chunks_than_markdown(self) -> None:
         """The 8x effect is in the TABLE chunks: 1735 vs 222 measured, a ratio of 7.8.

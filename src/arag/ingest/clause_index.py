@@ -246,7 +246,10 @@ def build_clause_index(
     index = ClauseIndex(generated_at=datetime.now(UTC).isoformat(timespec="seconds"))
 
     with span("ingest.clause_index"):
-        for source in manifest.sources:
+        # production_sources, not sources: the clause index is the cross-document join key
+        # for real wordings, and an adversarial fixture's payload clauses must not pollute
+        # it any more than they may reach retrieval.
+        for source in manifest.production_sources:
             path = raw_dir / f"{source.id}.pdf"
             if not path.exists():
                 log.warning("clause_index_skipped", source_id=source.id, reason="not fetched")

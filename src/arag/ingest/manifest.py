@@ -34,6 +34,13 @@ class SourceKind(StrEnum):
     CIRCULAR = "circular"
     ANNEXURE = "annexure"
     BROCHURE = "brochure"
+    # A deliberately poisoned document, built by tools/build_injection_fixture.py to carry
+    # prompt-injection payloads for the injection stratum. It is declared in the manifest so
+    # it is documented and loadable by a deliberate opt-in, and EXCLUDED from the production
+    # corpus by kind (see Manifest.production_sources) so the only way a payload reaches a
+    # retriever is that opt-in. A fixture must never be indistinguishable from a real source,
+    # which is the whole reason it is its own kind rather than a flag on an id.
+    ADVERSARIAL_FIXTURE = "adversarial_fixture"
 
 
 # Plain integer constants rather than an enum. The value is compared *numerically* in
@@ -81,6 +88,15 @@ class Source(BaseModel):
             raise ValueError(
                 f"{self.id}: brochures are marketing copy that asserts cover the policy "
                 "wording does not grant. Ingesting one poisons the corpus."
+            )
+        if self.kind is SourceKind.ADVERSARIAL_FIXTURE and self.authority_rank != RANK_MARKETING:
+            # A poisoned document must sit at the lowest rank, so that if it ever DID leak
+            # into retrieval the conflict logic would prefer every real source over it. The
+            # rank is defence in depth behind the production_sources exclusion, not instead
+            # of it.
+            raise ValueError(
+                f"{self.id}: an adversarial_fixture must have authority_rank "
+                f"{RANK_MARKETING} (lowest), got {self.authority_rank}"
             )
         if self.superseded_by == self.id:
             raise ValueError(f"{self.id}: cannot supersede itself")
@@ -141,6 +157,22 @@ class Manifest(BaseModel):
             if s.parent_document_id and s.parent_document_id not in ids:
                 raise ValueError(f"{s.id}: parent unknown {s.parent_document_id!r}")
         return self
+
+    @property
+    def production_sources(self) -> tuple[Source, ...]:
+        """The sources that may be ingested into the production corpus.
+
+        Everything except adversarial fixtures. `build_corpus` iterates this, not
+        `sources`, so a poisoned document is unreachable from the retrieval path unless a
+        caller deliberately opts in. Filtering by KIND rather than by id means a future
+        fixture inherits the exclusion without anyone remembering to list it.
+        """
+        return tuple(s for s in self.sources if s.kind is not SourceKind.ADVERSARIAL_FIXTURE)
+
+    @property
+    def adversarial_fixtures(self) -> tuple[Source, ...]:
+        """The poisoned documents, for the injection eval's deliberate opt-in only."""
+        return tuple(s for s in self.sources if s.kind is SourceKind.ADVERSARIAL_FIXTURE)
 
     @classmethod
     def load(cls, path: Path) -> Manifest:

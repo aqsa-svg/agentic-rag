@@ -574,7 +574,11 @@ def build_report(
 
 
 def build_corpus(
-    manifest_path: Path, raw_dir: Path, *, serialisation: str = "markdown"
+    manifest_path: Path,
+    raw_dir: Path,
+    *,
+    serialisation: str = "markdown",
+    include_adversarial: bool = False,
 ) -> CorpusIndex:
     """Chunk every manifest source, index the result, and report the coverage.
 
@@ -582,6 +586,11 @@ def build_corpus(
     the coverage report already catches it far more usefully: every page of the missing
     document turns up in ``pages_uncovered``, which is the truth (nothing was indexed for
     it) instead of an exception that says nothing about the other five documents.
+
+    ``include_adversarial`` is the deliberate opt-in that lets a poisoned fixture into the
+    index. It defaults to False, so the production path iterates ``production_sources`` and
+    a payload cannot reach a retriever by accident - which is asserted by
+    ``test_index_build.py::TestAdversarialFixtureIsUnreachable``.
     """
     _require(PYMUPDF_MODULE, TABLES_MODULE, CHUNKER_MODULE, LEXICAL_INDEX_MODULE)
     check_serialisation(serialisation)
@@ -594,8 +603,10 @@ def build_corpus(
     documents = 0
     tables_refused = 0
 
+    sources = manifest.sources if include_adversarial else manifest.production_sources
+
     with span("index.build"):
-        for source in manifest.sources:
+        for source in sources:
             pdf_path = raw_dir / f"{source.id}.pdf"
             if not pdf_path.exists():
                 log.warning("source_pdf_missing", source_id=source.id, path=str(pdf_path))
