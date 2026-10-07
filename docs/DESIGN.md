@@ -746,6 +746,29 @@ The same rule covers the enhancement caveat (`excl.01` B, `excl.02` B, `excl.03`
 answer is in sub-clause A and the caveat is in B, so a clause must be chunked together
 with its lettered sub-clauses.
 
+**A third occurrence, found 2026-10-07, and it is NOT a lettered sub-clause — which is why
+it is recorded here rather than left as a variant of the case above.** `def.grace_period`
+states a general rule and its exception in **consecutive sentences of continuous prose**:
+
+> Coverage need not be available during the period for which no premium is received. The
+> grace period for payment of the premium for all types of insurance policies shall be:
+> fifteen days where premium payment mode is monthly and thirty days in all other cases.
+> **Provided** the insurers shall offer coverage during the grace period, if the premium is
+> paid in instalments during the Policy Period.
+
+A chunk carrying only the first sentence **quotes the document against itself**: it returns
+"coverage need not be available" as the policy's position on a question the same definition
+answers the other way two sentences later. There is no lettered sub-clause to key on, no
+heading boundary, and no identifier marking where the rule ends and the exception begins —
+only the word *Provided*.
+
+It appears **identically in all four insurer wordings** (star-comprehensive-2025 p4,
+star-comprehensive-2021 p4, nivabupa-rise p2, nivabupa-reassure2 p2), because IRDAI mandates
+the definition's text. So this is not one insurer's drafting quirk that better chunking of
+one document would fix: it is a standardised definition whose rule and exception are
+separable by a chunker and must not be separated. The requirement therefore widens — a
+definition is chunked whole **to its proviso**, not merely to its lettered limbs.
+
 F4 and F12 are the two to highlight to a reviewer. Returning citations without synthesis under rate
 limiting is a genuinely useful degraded mode rather than an error page; and an ingest coverage report
 is the difference between "I built a pipeline" and "I know what my pipeline missed".
