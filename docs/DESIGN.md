@@ -449,6 +449,43 @@ in aspiration — and that claim is enforced by an import-linter test.
 | F12 | OCR failure / unparseable page | per-page confidence | quarantine, record in ingest manifest, emit coverage report — **never silently drop** | manifest assertion |
 | F13 | Agent makes no progress | tool-call counter | cap at 6 calls → answer with available evidence or abstain | loop test |
 
+### The 2024 standardisation regulated most cross-insurer contradictions out of existence
+
+Surveyed 2026-10-07, across every current document in the corpus, looking for two sources
+that disagree while both are in force. The `contradictory` stratum's floor was set at **5
+before anyone looked**. The survey found **three**.
+
+The reason is not that the labelling stopped early. IRDAI's 2024 master circular mandates
+the **wording**, not merely the substance, for grace period, free look, moratorium,
+cancellation, portability and claim settlement. Measured across
+`star-comprehensive-2025`, `nivabupa-rise` and `nivabupa-reassure2`, those clauses are now
+**verbatim-identical** — 30 days' free look, 60 months' moratorium, 7 days' notice with a
+proportionate refund, grace of 15 days monthly and 30 days otherwise, settlement within 15
+days. Several are identical down to the typo.
+
+So the failure mode this stratum was built to catch — a retriever handing someone another
+insurer's rule, which reads as authoritative because it is written in the same regulated
+language — **has largely been legislated away in this corpus**. What survives is precisely
+where an insurer wording retains a pre-standardisation term:
+
+| | position A | position B |
+|---|---|---|
+| cover during the grace period | `star-comprehensive-2025` p41 cl.9 — *not* available | `nivabupa-rise` p18 cl.8.1.3 — *is* available |
+| who submits claim documents | `irdai-master-circular-2024` p9 cl.17 — policyholder *"shall not be required to submit the documents"* | `star-comprehensive-2025` p37–38 — filing within 15 days, a condition **precedent to liability** |
+| the same, against Niva | as above | `nivabupa-reassure2` p25 cl.6.2.4, `nivabupa-rise` p23 cl.8.2.4 — documents the claimant must supply |
+
+**The floor was therefore lowered to 3 rather than filled.** Two options were available and
+both were refused: widening to `nivabupa-rise` against `nivabupa-reassure2` — two products
+from one insurer, which is not the failure the stratum exists to catch — and relaxing what
+counts as a disagreement until five fit. A composition gate that can be satisfied by
+padding measures the labeller's willingness to pad.
+
+This is the general form of a problem worth naming: **a coverage floor is a hypothesis
+about the corpus, and it is set before the corpus is known.** Supersession's floor of 5 was
+justified after the fact by five attested mechanisms; `contradictory`'s 5 never was, and
+the survey is what tested it. When a floor and a corpus disagree, one of them is wrong, and
+it is not automatically the corpus.
+
 ### The corpus has exactly two portable join keys, and both are regulatory
 
 A principle, because it explains a whole class of labelling failures rather than one bug.

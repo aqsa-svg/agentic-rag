@@ -7,6 +7,7 @@ corresponds to a way a golden set can silently become unmeasurable.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 from pydantic import ValidationError
@@ -588,13 +589,50 @@ class TestCompositionFloors:
     it: all floors are now coverage floors, and no rate from this set is quotable. Recorded
     rather than quietly dropped, because the earlier reasoning was sound and it was the
     premise that moved, not the logic.
+
+    CHANGED AGAIN 2026-10-07, for contradictory only, and in the other direction. A
+    systematic survey of every CURRENT document found THREE genuine cross-source
+    contradictions and no more: IRDAI's 2024 standardisation mandates the wording for
+    grace period, free look, moratorium, cancellation, portability and claim settlement,
+    so those clauses are verbatim-identical across all four insurer wordings. The
+    disagreements this stratum exists to catch have largely been regulated out of
+    existence, and what survives is where an insurer retained a pre-standardisation term.
+
+    So the floor was lowered to 3 rather than filled - not by relaxing what counts as a
+    disagreement, and not by pairing nivabupa-rise against nivabupa-reassure2, which is two
+    products from one insurer and not the failure this stratum is for. A composition gate
+    satisfiable by padding measures the labeller's willingness to pad. See DESIGN and
+    LIMITATIONS.
     """
 
-    def test_every_adversarial_floor_is_five(self) -> None:
+    # Pinned individually. "They are all five" stopped being expressible the moment one of
+    # them was not, and uniformity was never the property worth guarding - this is: NO floor
+    # moves without someone editing this table and recording why.
+    EXPECTED_FLOORS: ClassVar[dict[Strata, int]] = {
+        Strata.SUPERSESSION: 5,  # five attested mechanisms in this corpus, one item each
+        Strata.CONTRADICTORY: 3,  # corpus-limited: only three exist, surveyed 2026-10-07
+        Strata.UNANSWERABLE: 5,
+        Strata.INJECTION: 5,
+    }
+
+    def test_each_adversarial_floor_matches_its_recorded_reason(self) -> None:
         targets = SetTargets()
-        for stratum in Strata:
-            if stratum.is_adversarial:
-                assert targets.floor_for(stratum) == 5, stratum.value
+        actual = {s: targets.floor_for(s) for s in Strata if s.is_adversarial}
+        assert actual == self.EXPECTED_FLOORS, (
+            "an adversarial floor changed. That is allowed, and not allowed to happen "
+            "quietly: edit EXPECTED_FLOORS and record WHY in docs/DESIGN.md, as the "
+            "2026-10-02 cut and the 2026-10-07 contradictory survey both are."
+        )
+
+    def test_a_lowered_floor_still_gates(self) -> None:
+        """Lowering a floor must not turn the gate off for that stratum.
+
+        contradictory went 5 -> 3 because the corpus holds three. At zero items it must
+        still appear in the shortfall - otherwise "we lowered it" and "we removed it" look
+        identical from the outside, which is how a gate quietly stops gating.
+        """
+        shortfall = " ".join(SetTargets().shortfall(GoldenSet(items=[], source=Path("x"))))
+        assert "contradictory 0/3" in shortfall, shortfall
 
     def test_the_total_and_human_floor_match_the_cut(self) -> None:
         """Pinned so the target cannot drift without someone editing this line.

@@ -174,6 +174,25 @@ and it grows linearly with items already filed under an ambiguous name.
 
 ---
 
+## The `contradictory` floor is corpus-limited, not effort-limited
+
+Lowered from 5 to 3 on 2026-10-07 after a systematic survey, with the reasoning in
+`docs/DESIGN.md`. Stated here because it is a limitation of what can be measured, not a
+design choice.
+
+IRDAI's 2024 standardisation mandates the wording for grace period, free look, moratorium,
+cancellation, portability and claim settlement, so those clauses are verbatim-identical
+across all four insurer documents. Only three genuine cross-source contradictions exist in
+this corpus, and all three are places where an insurer retained a pre-standardisation term.
+
+**What this costs:** any cross-insurer contradiction rate computed from three items is a
+development signal and nothing more — one item moves it by 33 percentage points. The
+stratum demonstrates that the system can surface a conflict; it cannot support a claim
+about how often it does.
+
+**What would change it:** a fifth insurer, or a pre-2024 wording from a second insurer to
+pair against `star-comprehensive-2021`. Neither is a labelling task.
+
 ## Corpus scope
 
 ### Hindi IRDAI versions exist and were not ingested

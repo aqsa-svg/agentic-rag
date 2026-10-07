@@ -559,7 +559,38 @@ class SetTargets(BaseModel):
     # whose mechanism nobody has yet shown exists in this corpus, and unfindable label
     # targets are how a composition gate teaches people to bypass it. Revisit if a sixth
     # mechanism turns up - the constraint is the corpus, not the number.
-    min_per_stratum: dict[Strata, int] = {Strata.SUPERSESSION: 5}
+    # CONTRADICTORY is lowered to 3, and the reason is the corpus rather than the labelling.
+    #
+    # The floor was set at 5 before anyone surveyed what the corpus actually contains. A
+    # systematic sweep on 2026-10-07 across every CURRENT document - star-comprehensive-2025,
+    # nivabupa-rise, nivabupa-reassure2, irdai-master-circular-2024, irdai-annexure-2024 -
+    # found THREE genuine cross-source contradictions and no more.
+    #
+    # What it found instead: IRDAI's 2024 standardisation mandates the WORDING, not merely
+    # the substance, for grace period, free look, moratorium, cancellation, portability and
+    # claim settlement. Those clauses are now verbatim-identical across all four insurer
+    # documents - 30 days, 60 months, 7 days' notice with proportionate refund, 15/30 days
+    # by payment mode. The cross-insurer disagreements this stratum exists to catch have
+    # largely been REGULATED OUT OF EXISTENCE. What survives is where an insurer wording
+    # retains a pre-standardisation term.
+    #
+    # The three, kept as the record of what the floor is based on:
+    #   1. cover during the grace period   star p41 cl.9 says NOT available;
+    #                                      nivabupa-rise p18 cl.8.1.3 says it IS
+    #   2. who submits claim documents     irdai circular p9 cl.17 says the policyholder
+    #                                      "shall not be required to"; star p37-38 makes
+    #                                      filing within 15 days a condition PRECEDENT
+    #   3. the same, with Niva             reassure2 p25 cl.6.2.4 / rise p23 cl.8.2.4 list
+    #                                      documents the claimant must supply
+    #
+    # Deliberately NOT done: widening to nivabupa-rise against nivabupa-reassure2. Two
+    # products from one insurer disagreeing is not the failure this stratum exists to
+    # catch, and padding a floor to hit a number makes the composition gate decorative -
+    # the gate would then be measuring the labeller's willingness to pad, not the corpus.
+    #
+    # Revisit if a fifth insurer enters the corpus. The constraint is the corpus, not the
+    # number, and not the labelling effort. Recorded in DESIGN and LIMITATIONS.
+    min_per_stratum: dict[Strata, int] = {Strata.SUPERSESSION: 5, Strata.CONTRADICTORY: 3}
 
     def floor_for(self, stratum: Strata) -> int:
         return self.min_per_stratum.get(stratum, self.min_per_adversarial_stratum)
