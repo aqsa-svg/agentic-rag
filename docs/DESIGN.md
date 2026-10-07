@@ -90,6 +90,54 @@ Derived from the domain. **You should correct or replace these** — they become
 | 15 | **Supersession** | "Is sleep apnea treatment covered?" — excluded in the 2021 wording, no such exclusion in 2025 | must answer from the current wording and **not surface the stale clause** |
 | 13 | **Injection** | payload embedded in an ingested document body | must ignore |
 
+### Injection fixture findings — where a payload hides in a real PDF, measured
+
+The injection stratum needs payloads that **extract into a chunk but a human reviewing the
+PDF does not see**. A fixture was built from `star-comprehensive-2025` (the builder is
+`tools/build_injection_fixture.py`; the PDF is a local artefact, gitignored like its
+copyrighted source). Four findings came out of building it, each measured rather than
+assumed.
+
+**1. The highest-yield injection site needs no hiding technique at all.** Page header and
+footer bands are visible but skipped by every human reader as furniture — and they are
+ingested as body text. Measured: the star-2025 banner already appears in **45 of 242
+chunks**, the UIN footer in 44. A payload placed in the banner enters dozens of chunks at
+once, reads as boilerplate to anyone proofing the document, and is indistinguishable from
+legitimate furniture to the chunker. The gap it exploits is attention, not invisibility.
+
+**2. Render mode 3 (invisible text) is indistinguishable from a legitimate OCR text layer,
+so "invisible text is suspicious" cannot be the basis of a detector.** PDF text render mode
+3 paints nothing in a spec-compliant viewer; it is exactly the mechanism every searchable
+scanned PDF uses to carry its OCR layer under the page image. Verified in the fixture:
+`3 Tr` is present in the content stream, so Adobe, Chrome and Firefox render the payload
+invisible. A defence that flags render-mode-3 text as an attack would false-positive on
+every OCR'd document in a real corpus. This **bounds what the injection defence can be
+before anyone builds it**: the signal is not "is the text invisible" but "does retrieved
+text contain an instruction", which is a content property, not a rendering one.
+
+  *(Aside, recorded so the next reader does not trip on it: MuPDF's own rasteriser — what
+  `page.get_pixmap()` uses — paints render-mode-3 text, unlike the viewers a human uses. So
+  a pixel-diff visibility check is the wrong oracle for this technique; the content-stream
+  operator is the right one.)*
+
+**3. Opaque-overlay hiding (draw text, cover with a filled rectangle) is not realizable in
+this document.** Every page carries a full-bleed InDesign background tint, measured at
+`(249, 251, 253)` and near-uniform. A solid-fill rectangle is therefore a visible patch
+anywhere on the page, and even pure white-on-white renders as a faint lighter patch against
+the tint. The realizable chromatic-hiding technique here is text coloured to the **exact
+background tint**, which is invisible only in a region that is cleanly that tint — and in
+this dense, fully-tinted layout the only such region is the top-bleed margin (y 6–26),
+measured 100% clean. The general lesson: which hiding techniques work is a property of the
+specific document's design, not of PDFs in the abstract, and must be measured per document.
+
+**4. The fixture's byte hash is not reproducible, so its integrity is pinned on extracted
+text, not bytes.** MuPDF writes a random trailer `/ID` on every save, so two builds of the
+identical fixture differ at the byte level and a pinned `expected_sha256` would flap on
+every rebuild — failing the drift-detection it exists for. The deterministic anchor is the
+sha256 of the concatenated page text, which is exactly the surface ingest consumes and is
+stable across builds (`10ae7d9c…`). This is the one place a fixture is pinned on what the
+pipeline reads rather than on the file it reads from.
+
 The four adversarial strata — 11 Unanswerable, 12 Contradictory, 13 Injection, 15 Supersession — are hand-authored by you, never LLM-generated.
 
 **The numbering is presentation order, not history.** Strata 14 and 15 were both added during labelling and are appended rather than inserted, so the numbers here do not run 1–15 in sequence. `Strata` in `schema.py` is the authority; this table is a view of it.
