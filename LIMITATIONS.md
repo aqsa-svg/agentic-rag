@@ -239,10 +239,34 @@ passing today proves nothing about the guard working.
 
 ---
 
-## Table extraction: three named gaps
+## Table extraction: four named gaps
 
 Tables are the load-bearing content in this corpus — 165 candidates on 131 of 197 pages —
 so the gaps in table handling matter more than anything else on this page.
+
+### Cross-version table comparison was done on flattened text, not on a column grid
+
+The supersession survey for items h-34 and h-35 compared the Modern Treatments sub-limit
+tables between `star-comprehensive-2021` p10 and `star-comprehensive-2025` p10 and reported
+**"every figure matches, in every sum insured band"**. That claim is true of the *number
+sequence* the two pages extract, and it was checked that way: the page text was flattened
+to a single line and the rupee figures read off in document order.
+
+What it does NOT establish is that each figure sits under the same column heading in both
+versions. The two pages are laid out differently - 2021 prints twelve treatments as one
+block, 2025 splits the same twelve across two tables of six - and at least one cell reads
+`Up to Sum Insured` spanning several columns, so the number count per row is lower than the
+heading count. A reader who takes "every figure matches" to mean "the cap on robotic
+surgery is unchanged" is relying on a column alignment that was never reconstructed.
+
+The conclusion drawn from it is weaker than it looks, and is stated here at its true
+strength: **no rupee figure was added, removed or altered between the two versions, and the
+sum insured bands are identical**. Whether any figure moved between columns is unknown.
+
+Closing it means parsing both pages into a cell grid - `arag.ingest.tables` can do this -
+and comparing cell by cell. Not done, because the survey's purpose was finding supersession
+candidates and it found two without needing the grid; a labelled item that turns on a
+specific cap would need the grid first.
 
 ### The T2 header guarantee is weaker than it sounds
 
