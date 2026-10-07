@@ -449,6 +449,41 @@ in aspiration — and that claim is enforced by an import-linter test.
 | F12 | OCR failure / unparseable page | per-page confidence | quarantine, record in ingest manifest, emit coverage report — **never silently drop** | manifest assertion |
 | F13 | Agent makes no progress | tool-call counter | cap at 6 calls → answer with available evidence or abstain | loop test |
 
+### What counts as a contradiction: the free-term / regulated-term test
+
+A reusable criterion, written down because it has already decided two cases in opposite
+directions and will decide every cross-insurer candidate after them.
+
+> **Divergence on a FREE product term is two products, not a contradiction. Divergence on a
+> REGULATED term is a real conflict, because both wordings purport to implement one mandated
+> rule and cannot both be right.**
+
+Free terms are the ones an insurer prices and chooses: sub-limits, day counts, sum insured
+bands, cumulative bonus rates, room categories. Nothing requires two insurers to agree, so
+disagreement carries no information. Regulated terms are the ones IRDAI mandates — grace
+period, free look, moratorium, cancellation, portability, claim settlement — where each
+wording is an implementation of the same rule, and divergence means one of them is wrong or
+they are silently addressing different cases.
+
+Worked both ways:
+
+| candidate | term | verdict |
+|---|---|---|
+| Pre/post hospitalisation: Star 60/90 days, Niva 60/180 | **free** | dropped — each is correct for its own product |
+| Grace-period cover: Star *"not available"*, Niva *"is available"* | **regulated** | kept as h-18 — `irdai-master-circular-2024` p7 cl.9 grants it only where premium is paid in instalments, so both cannot be right for one payment mode |
+
+The test is not about how *different* the two statements look. The pre/post numbers differ
+by 90 days and contradict nothing; the grace-period sentences differ by one word and
+contradict each other completely. What decides it is whether an external rule obliges them
+to agree — the same principle that makes `excl.NN` a portable key and insurer clause
+numbering not: **a thing outside the document is what makes two documents comparable at
+all.**
+
+A corollary worth stating, since it is where the next candidate will go wrong: a regulated
+term whose counterparty is the REGULATOR rather than another insurer is not this case. One
+position is then overridden rather than merely different, and no stratum here expresses
+that — see the authority-override note under the floor in `arag/eval/schema.py`.
+
 ### The 2024 standardisation regulated most cross-insurer contradictions out of existence
 
 Surveyed 2026-10-07, across every current document in the corpus, looking for two sources
