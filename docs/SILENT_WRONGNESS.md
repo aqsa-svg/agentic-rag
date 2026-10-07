@@ -15,6 +15,12 @@ passes every type check, satisfies every schema, and produces no log line will b
 — and in a system that answers insurance-coverage questions, believed and wrong is the
 worst available outcome.
 
+Three further patterns are named at the end of this document, and the fourth has no code
+in it at all: a *finding* that existed only in the prose that reported it. It is listed with
+the others because the consequence is identical — a label would have validated, scored and
+reported a conflict that does not exist — and because it is the only one the harness cannot
+be taught to catch.
+
 Instances 1-5 were found by **checking output against the artefact it described**; none
 would have been caught by more unit tests of the code as written. Instances 6 and 7 are
 a second variety: not a wrong number but a wrong *module graph*, where the artefact to
@@ -731,6 +737,66 @@ occurrence 1; occurrences 2 and 3 both predate its application to the thing they
 
 ---
 
+## A FOURTH pattern — the finding that exists only in its own summary
+
+Named 2026-10-07, and it is the first one here with **no code in it at all.**
+
+Instances 1-11 are code that ran and produced a wrong number. The second pattern is code
+that is right and unread. The third is a guard working perfectly on the wrong question.
+This one is **narration**: a claim about a document, offered in prose, that the document
+does not make.
+
+### What happened
+
+A survey for `contradictory` candidates produced three. The third, C3, was reported as:
+
+> `nivabupa-reassure2` p25 cl.6.2.4 and `nivabupa-rise` p23 cl.8.2.4 list **documents the
+> claimant must supply**, against the IRDAI rule that the policyholder *"shall not be
+> required to submit the documents"*.
+
+Every checkable part of that was true. The clauses exist. The pages are right. Both ids
+resolve cleanly in the index — better provenance than either surviving candidate. What the
+clauses actually say is:
+
+```
+b. Documents required with claim form: [list]
+```
+
+A **list heading on a claim form**. It does not say the claimant must supply them; it does
+not address who collects them at all. A form convention does not disagree with a rule about
+who collects documents. **The obligation existed only in the paraphrase.**
+
+### The consequence, stated plainly
+
+The labeller would have written the item. It would have validated: two documents, two
+resolving clause ids, a concept, a well-formed `surface_conflict` expectation. It would have
+been committed, scored, and reported — and it would have tested a conflict that does not
+exist. Every downstream number computed from it would have been arithmetically correct and
+meaningless.
+
+**Nothing in this project could have caught it.** The schema validates shape. The resolver
+checks that a span's clause is on its page — and it was. Corpus resolution confirms the text
+exists — and it does. There is no check anywhere that asks *does this clause say what the
+summary says it says*, because that is a reading, and the harness reads nothing.
+
+Nor is it like instance 4 ("my own diagnostics, wrong four times"). Those were scripts that
+ran and printed a false number; a second script caught them. Here no code ran. The only
+thing that caught it was going back to the PDF and reading the sentence again.
+
+### Why it is structurally likely rather than careless
+
+Summarising is the one step in this workflow with no artefact to check against. Every other
+step produces something another step can contradict: a span resolves or it does not, a
+clause id is in the index or it is not, a metric is computed or it is undefined. A candidate
+described in prose produces a sentence, and a sentence is checked by reading the source —
+which is the work the summary was supposed to save.
+
+That makes it the hardest pattern to guard and the easiest to repeat. It is also the one
+most likely to appear in a system where one party reads the documents and another writes the
+labels, which is exactly this project's division of labour.
+
+---
+
 ## What this pattern implies for how the project is built
 
 Not "write more tests". These bugs passed their tests. The specific practices that caught
@@ -812,6 +878,14 @@ them, and that are now structural rather than remembered:
    asked. Before trusting a pass, re-read what the design actually requires and confirm the
    assertion encodes *that* - `nDCG > 0` and `nDCG > 0 within 60ms` differ by one clause and
    by the entire conclusion.
+
+16. **A candidate offered in prose is a claim about the document, not a finding, until the
+    exact wording of both sides has been read.** Added after C3 — a contradictory candidate
+    whose clauses, pages and ids were all correct and whose *conflict* was invented by the
+    summary that reported it. The rule is operational, not aspirational: a candidate is
+    quoted verbatim before it is labelled, and where a summary and a quotation disagree, the
+    summary is wrong by default. Paraphrase is where the obligation gets added.
+
 
 The through-line: **prefer a loud failure to a plausible output, at every layer.** Ingest
 raises rather than emit a header-less table chunk. Validation refuses rather than accept a
