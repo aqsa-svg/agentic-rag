@@ -479,6 +479,23 @@ This is the mid-course finding the provisional decision anticipated: the row-NL 
 carrying a serialiser bug, so its first T3 numbers understated it. The dense and hybrid
 re-run below is scored on the FIXED serialiser.
 
+##### Dense/hybrid prediction (pre-registered 2026-10-08, fixed serialiser, before results printed)
+
+Recorded before the dense/hybrid run finished, so held/failed is honest. The question this
+run answers: was markdown's BM25 win a term-coverage artefact (a whole-table chunk carries
+every query term) or does it survive once embeddings are in play.
+
+- **Under dense, row-NL narrows or closes the gap on single-row items** (h-06, h-10) - a
+  self-contained row sentence is what an asymmetric passage embedder is built for.
+  **Markdown keeps h-07/h-08** (multi-row worked examples: the answer is the carry-across,
+  which a single row loses).
+- **h-11: row-NL dense ranks the per-visit row above the annual-cap row more often than BM25
+  did**, because the semantic match to "per consultation" is stronger than the lexical one.
+- **Hybrid (RRF over BM25 + dense) beats both single retrievers on table-only recall@10**,
+  for each serialisation.
+- **Overall: markdown's BM25 advantage is partly term coverage, so the table-only gap shrinks
+  under dense but does not reverse** - markdown still ahead or level, not behind.
+
 **Decision: index markdown — PROVISIONAL, BM25 leg only.** Both indexes are kept. Row-NL's
 token saving is real but does not pay for the quality loss *on the BM25 leg*, and markdown's
 whole-table chunk is better answer context. But this is decided on one retriever, and the
