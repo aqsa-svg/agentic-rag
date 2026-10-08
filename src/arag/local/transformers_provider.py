@@ -5,7 +5,7 @@ OFFLINE ONLY. See ``arag/local/__init__.py`` for why this is not in ``arag.agent
 
 from __future__ import annotations
 
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from arag.agent.llm import LLMError, LLMErrorKind, LLMResponse
 from arag.obs import get_logger
