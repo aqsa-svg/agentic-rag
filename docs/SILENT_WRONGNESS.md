@@ -795,6 +795,36 @@ That makes it the hardest pattern to guard and the easiest to repeat. It is also
 most likely to appear in a system where one party reads the documents and another writes the
 labels, which is exactly this project's division of labour.
 
+### Second instance (2026-10-08): "644 passed, ruff clean" while CI was red from day one
+
+The same pattern, a different artefact. For a week I closed almost every batch with some
+form of **"644 tests pass, ruff clean, mypy unchanged"** and treated the tree as shippable.
+Every one of those statements was true of the commands I ran - `pytest -m 'not live'`,
+`ruff check src tests` - and false of the gate CI actually runs.
+
+The PR gate (`.github/workflows/ci.yml`) runs, in one Lint step, `ruff check` **and**
+`ruff format --check`; I only ever ran the first. It then runs `mypy`, whose non-zero exit
+I had been reporting as "5 pre-existing errors in untouched files" - a failing gate I read
+as green. Checked against the actual run history: **main has been red on all 33 runs, since
+the first commit (`689ffafe`, 2026-10-04). CI has never once passed.** The failure mode even
+shifted under me - early commits failed Typecheck first, my later edits added format drift
+so Lint fails first and now masks Typecheck, the coverage floor and the eval gate, none of
+which have run on a recent commit at all.
+
+The accurate claim all week would have been: *the subset of checks I run locally passes;
+the full gate is red and has been since day one.* What I reported instead was a
+self-selected subset, narrated as the whole. The code was fine; the reporting was wrong -
+exactly C3's shape, pointed at my own status line instead of at a document.
+
+Why it belongs with C3 and not with the code instances: nothing here produced a wrong
+number. The gate was doing its job and saying so, loudly and continuously, in a place I was
+not looking. The green came from running a smaller thing and calling it the bigger thing -
+a claim about the state of the tree that the tree did not make. The guard against it is the
+same as practice 16, moved from documents to process: **"CI is green" is a claim about the
+CI run, not about the commands you happened to run locally; it is unverified until the run
+is read.** A local `pytest` is to the PR gate what a prose summary is to the clause - a
+convenience that is not the thing itself.
+
 ---
 
 ## What this pattern implies for how the project is built
