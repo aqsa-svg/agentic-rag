@@ -378,6 +378,25 @@ So: **index whichever wins on the eval suite, keep the original table as answer 
 record the comparison.** Both are built; the choice is made by a number, and the delta goes in the
 write-up as a genuine trade-off rather than a preference.
 
+##### Prediction (pre-registered 2026-10-08, before the T3 run completed)
+
+Recorded before the results were read, so held/failed can be marked honestly rather than
+reconstructed after the fact. The six `table_formula` items (h-06 to h-11) are the first
+labels that make this comparison scorable.
+
+- **h-06**: row-NL wins or ties (single self-contained row — a disability payout % is one row).
+- **h-07, h-08**: markdown wins (the answer spans the worked example across rows; a single
+  row sentence loses the trigger condition and the carry-across).
+- **h-09**: fails under both (the caption-header defect is upstream of serialisation — the
+  header is wrong before either format is chosen).
+- **h-10**: row-NL slightly ahead, if each sentence carries both axes (Sum Insured and
+  delivery type).
+- **h-11**: row-NL at risk of retrieving the Rs 2,100 annual-cap row before the Rs 300
+  per-visit row.
+
+Expected overall: **no single winner.** Row-NL suits single-row lookups, markdown suits
+multi-row answers.
+
 #### Text normalisation (added after spike S5)
 
 S5 found 269 ligature codepoints (U+FB00–06), concentrated in `star-comprehensive-2021`. `beneﬁt`
