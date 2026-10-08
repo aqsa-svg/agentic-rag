@@ -422,6 +422,25 @@ Aggregate, all 19 answer items, with tokens/query beside quality:
 | tokens/query (top-10 context) | 1645 | **1156** (−29.7%) |
 | total chunks | 1024 | 2537 (2.5×) |
 
+**Table-only aggregate (h-06 to h-11), which is the figure that actually measures T3.** The
+19-item aggregate dilutes the serialisation effect, because prose and definition chunks are
+byte-identical across the two formats - only table chunks differ, so only table queries can
+show a difference. On the six table items:
+
+| metric | markdown | row-NL |
+|---|---|---|
+| recall@10 | **0.750** | 0.417 |
+| MRR | **0.743** | 0.450 |
+| nDCG@10 | **0.840** | 0.525 |
+| tokens/query | 1437 | **1159** (−19.3%) |
+
+Undiluted, the gap is far wider than the 19-item figure let on: markdown retrieves **0.750
+vs 0.417** recall and nearly doubles row-NL on MRR. The token saving on table queries is
+−19.3% (smaller than the −29.7% across all queries, because table queries pull the larger
+markdown table chunks into context on exactly the questions where markdown also wins). So
+the trade-off that looked close on the 19-item view is lopsided on the items it concerns:
+markdown is both more accurate and, on these queries, not even paying for it in proportion.
+
 **The going-in expectation was falsified.** DESIGN predicted markdown would retrieve *badly*
 ("mostly pipes and digits") and row-NL far better. The opposite held: **markdown won all
 three quality metrics.** Row-NL's only win is cost — 29.7% fewer tokens in the retrieved
@@ -430,10 +449,22 @@ tiny). The pre-registered prediction scored 2 held, 3 failed, 1 held-in-directio
 overall "no single winner" is wrong *on quality* — markdown is the single quality winner —
 while remaining a genuine trade-off once cost is counted.
 
-**Decision: index markdown**, by the number, as T3 said it would be. Row-NL's token saving
-is real but does not pay for a 5–7 point quality loss at this corpus size, and markdown's
-whole-table chunk is better answer context anyway. Row-NL is kept available behind the
-serialisation flag, not shipped.
+**Decision: index markdown — PROVISIONAL, BM25 leg only.** Both indexes are kept. Row-NL's
+token saving is real but does not pay for the quality loss *on the BM25 leg*, and markdown's
+whole-table chunk is better answer context. But this is decided on one retriever, and the
+re-run under dense and under hybrid is **day 3, not v2** - dense and hybrid are built
+tomorrow regardless, so T3 is re-scored under the same harness and the decision is remade
+then.
+
+**Why a BM25 win is not evidence about embedding quality.** BM25 scores on term overlap, and
+a whole-table markdown chunk carries *every* term in the table - the caption, every row
+label, every column header - so a query term is far likelier to land somewhere in it than in
+any single row-NL sentence. h-09 is the clean example: markdown retrieved it at rank 1
+because the chunk contained "vaccination" (the caption term), while the row-NL row sentences
+did not all carry it. That is a term-coverage effect of chunk SIZE, not of how well either
+format embeds. The dense re-run tests the thing BM25 structurally cannot: whether a markdown
+table of pipes and digits embeds worse than a row sentence. Until it runs, the markdown win
+is a lexical-retrieval fact, not a serialisation verdict.
 
 **Scope of the claim, stated plainly.** This is BM25-only; it does NOT test the dense-
 embedder half of the original concern (that a markdown table embeds poorly). A dense or
