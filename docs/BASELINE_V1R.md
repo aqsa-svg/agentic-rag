@@ -31,6 +31,14 @@ The only difference is that chunks now carry the clause ids their text contains.
 | recall@10 | **0.400** | ~~0.300~~ | 0.300 | ~~0.300~~ |
 | nDCG@10 | **0.235** | ~~0.188~~ | 0.179 | ~~0.179~~ |
 | MRR | **0.207** | ~~0.167~~ | 0.150 | ~~0.150~~ |
+
+> **nDCG re-checked against the corrected metric (2026-10-08) and UNCHANGED.** The nDCG bug
+> fixed on 2026-10-08 over-credited a span covered by several retrieved chunks; re-scored from
+> the stored per-span ranks, **both BM25 figures above (markdown 0.235, row-NL 0.179) are
+> identical to 3+ decimal places.** BM25 returned no duplicate per-span chunks on this set, so
+> there was nothing to over-credit - the bug only moved the dense and hybrid runs (v2, v4).
+> Recorded because a reader who knows the metric was wrong will wonder whether these were
+> re-checked: they were, and they did not move.
 | ctx precision@10 | **0.060** | ~~0.040~~ | 0.040 | ~~0.040~~ |
 | hit rate | **0.600** | ~~0.400~~ | 0.400 | ~~0.400~~ |
 

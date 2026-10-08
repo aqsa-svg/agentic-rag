@@ -130,6 +130,40 @@ mode with no marker-shaped text to latch onto. It scored the document's most dan
 clause pair as "weak / likely false positive". Reading found 2 of 2 instances; scanning
 found 1.
 
+### A fifth, 2026-10-08: a measurement that failed silently and looked like it ran
+
+Two more instruments joined the list above while re-checking the nDCG bug, and the second is
+the sharpest: the **runner** itself, not a heuristic.
+
+* The **nDCG metric** was wrong (it summed per-chunk relevance, so a clause spanning several
+  retrieved chunks pushed nDCG above 1). This is the instrument used to *rank the whole
+  system's retrieval quality*, and it was wrong for five commits of published figures. Its
+  hand-computed tests passed only because no case had ever given two chunks one span - the
+  mutation-testing lesson restated: **a test that has never seen the failing shape is not
+  known to detect it.**
+* The **v4 re-run wrapper** swallowed a syntax error. The script was launched as
+  `python script.py > out 2>&1; echo "exit $?"`, and the trailing `echo` always succeeds, so
+  the shell reported exit 0 while Python had raised on an unterminated f-string and computed
+  nothing - no RESULT lines, a clean-looking run. Had the output not been read line by line
+  it would have passed for a completed measurement.
+
+That is the same shape as the `(text, stats)` tuple stringified into "0 missing" and the
+`nDCG > 0` check that printed `EARNS IT`: the instrument reports success for the wrong
+reason. Fixed at the wrapper, not the script, because a hole in the runner is a hole under
+*every* future measurement: `tools/run_measurement.py` now compiles the script first, runs
+it, and exits with the script's own status, so a syntax error or a non-zero exit can no
+longer hide behind a trailing shell command.
+
+**The finding this leaves, stated plainly because it is about how the project was built, not
+an embarrassment to bury:** across this work the INSTRUMENTS have been wrong more often than
+the SYSTEM they measure - the ligature probe (15x over-report), the column-splice heuristic,
+the header-length rule, the conditional-override detector, the nDCG metric, and now the
+runner. A codebase whose measurements are more defect-prone than its product is telling you
+where the risk actually lives: not in the code that answers the question, but in the code
+that decides whether the answer is good. Every headline number in this project therefore
+earns trust by being re-derived and read, never by the label the instrument printed beside
+it.
+
 ---
 
 ## Instance 5 — C0 control characters surviving into indexed text

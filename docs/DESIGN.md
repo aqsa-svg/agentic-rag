@@ -605,13 +605,29 @@ Both indexes stay built behind the serialisation flag; the change from the provi
 "markdown" is the whole point of having fixed the three things upstream of the measurement
 before trusting it.
 
-**The pattern, named for the third time.** This is the third published conclusion in this
-project overturned by fixing something UPSTREAM of the measurement rather than re-running it:
-the chunker/matcher clause-id blindness (instance 9) made retrieval look broken when the
-labels were unmatchable; the serialiser caption bug made row-NL look worse than markdown; and
-a gate that was never green made "644 passed, ruff clean" mean less than it read. Each time the
-fix changed the ANSWER, not merely the number - which is the argument, restated, for spending
-effort upstream of a measurement before spending it on the measurement.
+**The pattern, named a fourth time, and the metric itself was one of the upstream things.**
+Four published conclusions in this project have been overturned by fixing something UPSTREAM
+of the measurement rather than re-running it: the chunker/matcher clause-id blindness
+(instance 9) made retrieval look broken when the labels were unmatchable; the serialiser
+caption bug made row-NL look worse than markdown; a gate that was never green made "644
+passed, ruff clean" mean less than it read; and the **nDCG metric itself** over-credited
+multi-chunk spans, so every published nDCG was the ranking *instrument* reporting the wrong
+number - the measuring tool sitting upstream of the thing it measured. Each fix changed the
+ANSWER, not merely the number, which is the argument, restated, for spending effort upstream
+of a measurement before spending it on the measurement.
+
+**The nDCG correction was carried back through every earlier conclusion, and none moved.**
+v1, v2 and v4 were re-scored against the fixed metric - v1/v2 exactly, from the stored
+per-span ranks; v4 by re-running its original items, since it stored none. **No conclusion
+changed.** v1's BM25 nDCG is identical (BM25 returned no duplicate per-span chunks, so it had
+nothing to over-credit). v2's dense (0.420 → 0.383) and hybrid (0.383 → 0.330) both dropped,
+but non-uniformly - hybrid most, because RRF surfaces the most redundant per-span chunks -
+so the dense > hybrid gap *widened* and the "hybrid loses to dense" conclusion is
+strengthened. v4's reranker still produces the best ranking quality, by +0.012 rather than
+the inflated +0.070, which only sharpens the not-shipped-on-latency decision. Recorded as its
+own line because a reader who knows the metric was wrong will ask whether the back-catalogue
+was re-checked: it was, exactly where the data allowed and by re-run where it did not, and the
+answer is that the bug moved numbers without moving a single verdict.
 
 #### Text normalisation (added after spike S5)
 

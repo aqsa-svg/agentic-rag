@@ -8,10 +8,22 @@
 > **4,108 ms against DESIGN §5.5's 60 ms budget**: 65x over, more than the entire 2.5 s
 > flat-lookup p95 allowance in a single stage.
 >
-> Shipping it would have bought +0.070 nDCG and broken the latency budget by a factor of
+> Shipping it would have bought ~~+0.070~~ nDCG and broken the latency budget by a factor of
 > 65. The online configuration therefore remains **v3 — dense + supersession filter,
 > 208 ms, nDCG 0.526** — and the reranker stays an offline quality ceiling, the role
 > DESIGN §5.5 reserves for exactly this situation.
+>
+> **nDCG correction, 2026-10-08 — the decision is STRENGTHENED, not changed.** The 0.595 /
+> 0.526 figures used the over-crediting nDCG (`docs/SILENT_WRONGNESS.md`: it summed per-chunk
+> relevance, so a span covered by several chunks was counted repeatedly). The v4 run stored no
+> per-span ranks, so it was re-run on its original items with the fixed metric and the same
+> reranker: **dense 0.383, dense + rerank 0.395 — rerank still gives the best ranking quality,
+> but the gain is +0.012, not +0.070.** The inflated figures were roughly 6x the real gain.
+> The reranker now reads as buying **+0.012 nDCG for 68x the latency budget**, so the
+> NOT-SHIPPED decision - which rested on latency and never on the nDCG value - is reinforced:
+> a smaller gain for the same cost. (The absolute numbers differ from the 0.526 / 0.595 above
+> because those applied the as_of filter and the re-run did not; the RELATIVE rerank effect,
+> same config on both sides, is what the correction speaks to.)
 >
 > It becomes shippable when the ONNX-INT8 path closes the gap between 3,900 ms and 60 ms.
 > That work is specified and not done.
@@ -28,8 +40,8 @@ Raw: `data/v4_rerank.json`.
 
 | engine | recall@10 | nDCG@10 | MRR | ctx precision | hit rate | latency |
 |---|---|---|---|---|---|---|
-| dense | 0.700 | 0.526 | 0.375 | 0.160 | 0.800 | **208 ms** |
-| dense + rerank | 0.700 | **0.595** | **0.440** | 0.160 | 0.800 | **4,108 ms** |
+| dense | 0.700 | ~~0.526~~ 0.383 corrected | 0.375 | 0.160 | 0.800 | **208 ms** |
+| dense + rerank | 0.700 | ~~**0.595**~~ 0.395 corrected | **0.440** | 0.160 | 0.800 | **4,108 ms** |
 | hybrid | 0.400 | 0.386 | 0.367 | 0.080 | 0.600 | **123 ms** |
 | hybrid + rerank | **0.500** | **0.463** | **0.440** | 0.100 | **0.800** | **4,139 ms** |
 

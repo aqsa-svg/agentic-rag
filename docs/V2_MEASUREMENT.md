@@ -19,9 +19,23 @@
 > | BM25 ~~before~~ | ~~0.300~~ | ~~0.188~~ | ~~0.167~~ | ~~0.040~~ | ~~0.400~~ |
 > | BM25 **after** | **0.400** | **0.235** | **0.207** | **0.060** | **0.600** |
 > | dense ~~before~~ | ~~0.400~~ | ~~0.309~~ | ~~0.307~~ | ~~0.060~~ | ~~0.600~~ |
-> | dense **after** | **0.600** | **0.420** | **0.327** | **0.120** | **0.800** |
+> | dense **after** | **0.600** | ~~0.420~~ **0.383** | **0.327** | **0.120** | **0.800** |
 > | hybrid ~~before~~ | ~~0.300~~ | ~~0.253~~ | ~~0.250~~ | ~~0.040~~ | ~~0.400~~ |
-> | hybrid **after** | **0.400** | **0.383** | **0.350** | **0.080** | **0.600** |
+> | hybrid **after** | **0.400** | ~~0.383~~ **0.330** | **0.350** | **0.080** | **0.600** |
+>
+> **nDCG correction, 2026-10-08.** The nDCG column above was computed with a metric that
+> over-credited a labelled span when several retrieved chunks covered it (`ndcg_at_k` summed
+> per-chunk relevance; it now credits each span once - see `docs/SILENT_WRONGNESS.md` and the
+> hand-computed test). Re-scored from the stored per-span ranks: **dense 0.420 → 0.383, hybrid
+> 0.383 → 0.330; BM25 is unchanged at 0.235** (lexical retrieval returned no duplicate
+> per-span chunks on this set, so it had nothing to over-credit). recall, MRR, ctx-precision
+> and hit-rate are untouched - the bug was in nDCG alone.
+>
+> **The correction was NOT uniform, which is why the ordering is credible rather than lucky:**
+> BM25 dropped 0%, dense 8.8%, hybrid **13.8%** - hybrid most, because RRF fuses two retrievers
+> and surfaces the most redundant per-span chunks, which is exactly what the bug rewarded. So
+> the dense > hybrid nDCG gap did not merely survive, it **widened** (0.037 → 0.053): the
+> conclusion below is strengthened by the fix, not threatened by it.
 >
 > **`docs/BASELINE_V1.md` is invalidated by the same defect** and carries its own notice. The
 > `v1_baseline` threshold profile was derived from the understated BM25 figures.
