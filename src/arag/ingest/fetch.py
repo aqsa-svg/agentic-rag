@@ -244,6 +244,4 @@ async def fetch_all(
             # Adversarial fixtures are BUILT by tools/build_injection_fixture.py, not
             # fetched. Fetching one would try a non-existent url and, worse, could overwrite
             # the built payload with whatever that url served.
-            return list(
-                await asyncio.gather(*(guarded(s) for s in manifest.production_sources))
-            )
+            return list(await asyncio.gather(*(guarded(s) for s in manifest.production_sources)))

@@ -99,11 +99,32 @@ python_version = "3.11"
 strict = true
 files = ["src/arag"]
 
+# The OFFLINE modules are excluded from the default (PR-gate) run, because the PR gate
+# installs .[dev] only - no torch, numpy or sentence-transformers - and type-checking a
+# module whose dependencies are absent checks nothing: every call into the missing library
+# is "untyped" or "not found", which is noise that masks real errors rather than catching
+# them. These modules ARE type-checked in the NIGHTLY, which installs .[offline] and passes
+# them to mypy explicitly (an explicit path overrides this exclude). Keeping them out of the
+# fast offline gate, rather than stubbing torch (which ships no stubs at all), is the honest
+# split: the gate checks what it can actually check.
+exclude = [
+    "src/arag/index/dense.py",
+    "src/arag/local/reranker.py",
+    "src/arag/local/transformers_provider.py",
+]
+
 # PyMuPDF ships no type stubs, so every call into it is "untyped" under strict mode.
 # Relaxing that check for this one module is preferable to sprinkling `# type: ignore`
 # through the probe, which would also suppress genuine errors in our own code.
 [[tool.mypy.overrides]]
 module = "pymupdf.*"
+ignore_missing_imports = true
+
+# openpyxl ships no type stubs either, and it IS installed in the PR gate (it is a .[dev]
+# dep - labelling reads the workbook through it). Without this, xlsx.py reports import-
+# untyped on every openpyxl import - a library-stub gap, not a defect in our code.
+[[tool.mypy.overrides]]
+module = ["openpyxl", "openpyxl.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

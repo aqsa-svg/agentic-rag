@@ -13,15 +13,24 @@ from __future__ import annotations
 import math
 from datetime import date
 
-import numpy as np
 import pytest
 
-from arag.index.dense import DenseIndex, EmbeddingCache, default_query_prefix
-from arag.ingest.chunk_types import Chunk, ChunkKind
-from arag.retrieval.dense import DenseRetriever
-from arag.retrieval.embedding import BGE_QUERY_PREFIX
-from arag.retrieval.hybrid import RRFHybridRetriever
-from arag.retrieval.types import ChunkMeta, DocSpan, RetrievalFilters, RetrievedChunk
+# This module tests the OFFLINE dense stack (numpy, sentence-transformers / torch), which
+# the offline PR gate does not install. Guard the imports so the file SKIPS cleanly there
+# instead of raising ImportError at collection - a collection error reddens the whole Tests
+# step, which is how test_dense.py quietly broke CI while the local suite (with .[offline]
+# installed) reported green. The skip is made visible by the gate's `pytest -rs` and the
+# skip-count line in the job summary; a silently skipped hard test is the failure this whole
+# episode records.
+np = pytest.importorskip("numpy")
+pytest.importorskip("arag.index.dense")
+
+from arag.index.dense import DenseIndex, EmbeddingCache, default_query_prefix  # noqa: E402
+from arag.ingest.chunk_types import Chunk, ChunkKind  # noqa: E402
+from arag.retrieval.dense import DenseRetriever  # noqa: E402
+from arag.retrieval.embedding import BGE_QUERY_PREFIX  # noqa: E402
+from arag.retrieval.hybrid import RRFHybridRetriever  # noqa: E402
+from arag.retrieval.types import ChunkMeta, DocSpan, RetrievalFilters, RetrievedChunk  # noqa: E402
 
 
 class FakeEmbedder:

@@ -704,9 +704,9 @@ class TestFullCorpusBuild:
         assert fixtures, "this test is vacuous unless the manifest declares a fixture"
 
         default = build.build_corpus(MANIFEST, RAW_DIR, serialisation="markdown")
-        assert not (
-            {c.source_id for c in default.chunks.values()} & fixtures
-        ), "a fixture reached the default corpus - the production_sources exclusion is broken"
+        assert not ({c.source_id for c in default.chunks.values()} & fixtures), (
+            "a fixture reached the default corpus - the production_sources exclusion is broken"
+        )
 
         opted_in = build.build_corpus(
             MANIFEST, RAW_DIR, serialisation="markdown", include_adversarial=True

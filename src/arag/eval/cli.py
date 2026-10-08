@@ -311,8 +311,29 @@ def run(
     log_run: Annotated[
         bool, typer.Option("--log/--no-log", help="Append to data/eval_runs.jsonl.")
     ] = True,
+    smoke: Annotated[
+        bool,
+        typer.Option(
+            help="Smoke mode: run the harness end to end and assert it COMPLETES, without "
+            "enforcing quality thresholds. The offline PR gate uses this with --engine null "
+            "- it checks the harness runs, not that a null engine scores well (it cannot). "
+            "The real quality gate runs in the nightly against a real engine."
+        ),
+    ] = False,
 ) -> None:
-    """Run the suite and enforce the gate."""
+    """Run the suite. Enforces the quality gate unless --smoke is set.
+
+    Two distinct uses, deliberately kept in one command so they exercise the same code path:
+
+    * **Quality gate** (default): fail with exit 1 if any metric is below its threshold.
+      Meaningful only against a real engine, so this is the NIGHTLY's job.
+    * **Smoke test** (``--smoke``): fail only if the harness cannot run the set to
+      completion (exit 2 for a broken harness); a failed quality threshold is NOT a failure
+      here. This is the offline PR gate's job - it proves the end-to-end path works on every
+      commit, deterministically, without a model. The null engine scoring 0 is expected and
+      must not redden the gate; that it once did, after labels landed, is why this flag
+      exists.
+    """
     configure_logging(settings().log_level)
 
     if engine not in ENGINES and engine not in LAZY_ENGINES:
@@ -364,6 +385,17 @@ def run(
         path = write_eval_log(RUNS_PATH, settings().eval_log_path)
         typer.echo(f"  recorded -> {RUNS_PATH}, rendered -> {path}\n")
 
+    if smoke:
+        # The harness ran to completion - which is all the PR gate asserts. A failed
+        # quality threshold is not a smoke failure; only a broken harness (raised above as
+        # Exit 2) is. Report the gate result for visibility, then exit 0.
+        if result.gate and not result.gate.passed:
+            typer.secho(
+                "  smoke: harness completed; quality thresholds NOT enforced "
+                "(that is the nightly's gate).",
+                fg=typer.colors.YELLOW,
+            )
+        return
     if result.gate and not result.gate.passed:
         raise typer.Exit(1)
 

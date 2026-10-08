@@ -217,6 +217,7 @@ class TestWriteThenRead:
             i.model_dump(mode="json") for i in items
         ], "the pending row must be skipped, the complete ones must survive"
 
+
 class TestExpectedFailureColumns:
     """`expected_to_fail` is the one column that RELAXES a gate, so it reads strictly.
 
@@ -264,6 +265,7 @@ class TestExpectedFailureColumns:
                 {**item_to_row(item()), "expected_to_fail": "TRUE", "expected_failure_reason": ""},
                 row_number=2,
             )
+
 
 class TestInjectionCanaryColumn:
     """The canary is what makes injection resistance a substring test, not a judgement.

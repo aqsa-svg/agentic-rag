@@ -1,13 +1,29 @@
 name: ci
 
-# Two-tier evaluation, per DESIGN §7.
+# Two-tier evaluation, per DESIGN §7. The scope of each tier is written here on purpose:
+# this gate was red from the first commit to day 5 because nobody had written down what it
+# was FOR, so every failure looked like a bug to patch rather than a question to answer.
 #
-# PR job:     lint, typecheck, tests with a 70% coverage floor, and the eval gate against
-#             recorded cassettes. Seconds, free, deterministic, no API keys in scope.
-# Nightly:    the full suite against live models with thresholds enforced.
+# PR gate — WHAT IT IS: offline, deterministic, `.[dev]`-only, fast (seconds), no API keys,
+#   no corpus PDFs, no ML stack. WHAT IT CHECKS: that the code is well-formed (lint, format,
+#   types for the modules whose deps are installed) and the deterministic parts behave
+#   (unit tests, a coverage floor, and that the eval harness RUNS end to end). WHAT IT DOES
+#   NOT CHECK: quality. A `.[dev]`-only gate cannot score retrieval or generation - it has
+#   no embedder, no corpus and no model - so it must not pretend to. The eval step runs the
+#   null engine in --smoke mode: it asserts the harness completes, never that a null engine
+#   scores well (it cannot, and once real labels landed, asserting thresholds here turned
+#   the gate red for doing exactly what a null engine does).
+#
+# Nightly — WHERE QUALITY IS MEANT TO LIVE. Currently it still runs the null engine in
+#   smoke mode too, because the real quality gate is not yet operational: no live engine is
+#   wired into the registry (only null/echo/bm25), and CI has neither the corpus PDFs
+#   (copyrighted, gitignored) nor recorded cassettes to run bm25 against. Enabling the real
+#   gate is a tracked item - see DESIGN §7 and LIMITATIONS - not something to fake by
+#   asserting thresholds against an engine that returns nothing.
 #
 # The split exists because a gate that flakes on a 15 RPM rate limit is a gate people
-# learn to re-run instead of read. Determinism is the feature.
+# learn to re-run instead of read. Determinism is the feature. So is honesty about scope:
+# a gate that is green must be green for a reason it actually checks.
 
 on:
   pull_request:
@@ -52,17 +68,40 @@ jobs:
         run: mypy
 
       - name: Validate golden set
-        # Reports composition shortfall. Does not fail the build while the set is still
-        # seed data; it becomes a hard gate once the real 120 items land.
+        # A hard gate now: the set is 30 human-authored items with every stratum floor met,
+        # so `validate` exits 0. It fails the build if a label becomes unresolvable or the
+        # composition regresses - a broken golden set is a broken harness, not a quality dip.
         run: arag-eval validate
 
       - name: Tests with coverage floor
-        run: pytest -m "not live" --cov --cov-report=term-missing --cov-fail-under=70
+        # -rs prints the reason for every skip. The offline gate SKIPS its hardest tests -
+        # the dense/offline stack (no numpy/torch here) and the corpus tests (no PDFs) - and
+        # a gate that skips silently is green-while-checking-a-subset, the exact failure this
+        # workflow's history records. The skip count is surfaced in the job summary below.
+        run: |
+          pytest -m "not live" -rs --cov --cov-report=term-missing --cov-fail-under=70 \
+            | tee pytest-out.txt
 
-      - name: Eval gate
-        # Exit 1 = quality regression. Exit 2 = the harness itself is broken (invalid
-        # golden set, stale cassette, bad config). Distinguishing them is the point.
-        run: arag-eval run --engine null --fast
+      - name: Surface skipped tests in the job summary
+        if: always()
+        # Make the skips loud. If the number jumps, someone has moved a real check behind a
+        # skip, and this line is where they will see it without reading the full log.
+        run: |
+          {
+            echo "### Test skips (offline gate)"
+            echo '```'
+            grep -E "^SKIPPED|skipped" pytest-out.txt | tail -40 || echo "none"
+            echo '```'
+            grep -oE "[0-9]+ skipped" pytest-out.txt | tail -1 || true
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Eval smoke test (harness runs; thresholds NOT enforced here)
+        # --smoke: assert the harness runs the set to completion, not that the null engine
+        # scores well. Exit 2 = a broken harness (invalid golden set, stale cassette, bad
+        # config) and still fails. The real quality gate, against a real engine, is the
+        # nightly's job - see the header comment. This step used to omit --smoke, so a null
+        # engine scoring 0 reddened the gate the moment real labels landed.
+        run: arag-eval run --engine null --fast --smoke
 
       - name: Upload run artefacts
         if: always()
@@ -93,12 +132,26 @@ jobs:
           cache: pip
 
       - name: Install
-        run: python -m pip install -e ".[dev,ragas]"
+        # offline too: the nightly is where the modules the PR gate cannot type-check (the
+        # dense/ML stack) get checked, with their dependencies actually present.
+        run: python -m pip install -e ".[dev,ragas,offline]"
+
+      - name: Typecheck the offline modules the PR gate skips
+        # The PR gate excludes these (deps not installed there - see pyproject [tool.mypy]).
+        # Explicit paths override that exclude, and here their deps ARE installed, so this is
+        # the run that actually checks them.
+        run: mypy src/arag/index/dense.py src/arag/local/reranker.py src/arag/local/transformers_provider.py
 
       - name: Full eval
         # Concurrency stays low: the generator sits behind a 15 RPM free tier and an
         # unbounded fan-out would spend the run in backoff, making latency numbers useless.
-        run: arag-eval run --engine null --concurrency 2
+        #
+        # STILL --smoke, and still the null engine, DELIBERATELY: the real quality gate is
+        # not yet operational (no live engine in the registry, no corpus/cassettes in CI),
+        # so asserting thresholds here would redden the nightly for a gap in wiring, not a
+        # regression. When a live engine lands, this becomes `--engine <live>` without
+        # --smoke and the thresholds bite. Tracked in DESIGN §7.
+        run: arag-eval run --engine null --concurrency 2 --smoke
 
       - name: Commit updated metric history
         # The v1 -> v2 -> v3 metric log is the most valuable artefact this project

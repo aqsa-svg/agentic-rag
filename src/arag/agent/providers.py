@@ -17,7 +17,7 @@ import os
 import re
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from arag.agent.llm import LLMError, LLMErrorKind, LLMRequest, LLMResponse
+from arag.agent.llm import LLMError, LLMErrorKind, LLMProvider, LLMRequest, LLMResponse
 from arag.obs import get_logger, span
 
 if TYPE_CHECKING:
@@ -339,7 +339,7 @@ class RetryingProvider:
 
     def __init__(
         self,
-        inner: Any,
+        inner: LLMProvider,
         *,
         max_attempts: int = 3,
         base_delay_s: float | None = None,

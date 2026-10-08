@@ -5,7 +5,7 @@ OFFLINE ONLY. See ``arag/local/__init__.py`` for why this is not in ``arag.agent
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 from arag.agent.llm import LLMError, LLMErrorKind, LLMResponse
 from arag.obs import get_logger
@@ -77,9 +77,13 @@ class LocalTransformersProvider:
         # `.to(device)` rather than `device_map=`: device_map pulls in `accelerate`, which
         # this project does not depend on and does not need. Multi-device placement is
         # meaningless for a 1.5B model on one CPU.
+        # transformers' stubs misreport this chain: `.to(device)` resolves to a wrapped
+        # descriptor whose __call__ is typed to expect a PreTrainedModel, so a plain device
+        # string is flagged. The call is correct and documented; the stub is wrong, so it is
+        # narrowly ignored rather than reshaped around.
         self._model = AutoModelForCausalLM.from_pretrained(
             model, dtype=torch.float32, local_files_only=True
-        ).to(device)
+        ).to(device)  # type: ignore[arg-type]
         self._model.eval()
         self._max_input_tokens = max_input_tokens
         log.info("local_model_loaded", model=model, device=device)
@@ -124,7 +128,9 @@ class LocalTransformersProvider:
             )
         new_tokens = generated[0][input_tokens:]
         output_tokens = int(new_tokens.shape[0])
-        answer = self._tokeniser.decode(new_tokens, skip_special_tokens=True)
+        # decode of a single token sequence returns str; the stub widens the
+        # return to str | list[str] (that is the batch_decode shape), so narrow it.
+        answer = cast(str, self._tokeniser.decode(new_tokens, skip_special_tokens=True))
 
         # Same MAX_TOKENS semantics as the hosted provider, so the engine's truncation
         # branch is exercised identically rather than being a Gemini-only path.

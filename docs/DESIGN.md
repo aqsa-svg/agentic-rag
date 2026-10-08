@@ -1015,11 +1015,38 @@ Four schema decisions worth defending:
 - `make judge-agreement` — κ report.
 - Thresholds in `eval/thresholds.yaml`, versioned. CI fails on regression beyond tolerance.
 
-### CI shape
+### CI shape, and what each tier is actually FOR
 
-PR → `eval-fast` against recorded cassettes: seconds, free, deterministic, cannot flake on rate
-limits. Nightly + manual → full live suite with thresholds enforced. A gate that flakes is a gate
-people learn to ignore, and that reasoning is itself the interview answer.
+Written down because not writing it down cost a week: the PR gate was red from the first
+commit (2026-10-04) to 2026-10-08, on all 33 runs, and every failure read as a bug to patch
+rather than a question about scope. Recorded as the second instance of the narration pattern
+in `docs/SILENT_WRONGNESS.md`.
+
+**PR gate — offline, deterministic, `.[dev]`-only, fast.** It checks that the code is
+WELL-FORMED and the DETERMINISTIC parts behave: `ruff check` **and** `ruff format --check`
+(both - running only the first is the gap that hid the drift); `mypy` over the modules whose
+deps are installed; `arag-eval validate` (a broken golden set is a broken harness); unit
+tests behind a 70% coverage floor with skips made visible (`-rs` + a job-summary line, so a
+silently-skipped hard test cannot pass for green); and `arag-eval run --engine null --fast
+--smoke`, which asserts the harness RUNS end to end, not that a null engine scores well.
+
+**What the PR gate cannot and must not check: quality.** A `.[dev]`-only job has no embedder,
+no corpus (the PDFs are copyrighted and gitignored), and no model. It cannot score retrieval
+or generation, so it does not pretend to. The null engine scoring 0 is correct behaviour;
+asserting thresholds against it - which the gate did until labels landed - turns the gate red
+for a non-regression.
+
+**Quality is the nightly's job - and is NOT YET OPERATIONAL.** The real gate needs a live
+engine (none is wired into the registry yet - only `null`, `echo`, and the lazy `bm25`
+retrievers) and either the corpus or recorded cassettes in CI (it has neither). Until both
+land, the nightly also runs the null engine in `--smoke` mode, and type-checks the offline
+modules the PR gate excludes (installing `.[offline]` so their deps are present). The moment
+a live engine exists, the nightly's eval drops `--smoke` and the thresholds in
+`eval/thresholds.yaml` bite. See LIMITATIONS: the gate has run against no real engine on any
+commit, so no quality number has ever gated a merge.
+
+A gate that flakes is a gate people learn to ignore; a gate that is green for a reason it
+does not actually check is worse. Determinism and honesty-about-scope are both the feature.
 
 ---
 
