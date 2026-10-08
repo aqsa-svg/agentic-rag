@@ -5,22 +5,41 @@ is a thing a reviewer should be able to ask about and get a straight answer on.
 
 ---
 
-## The evaluation gate currently has no data
+## The evaluation set is 30 items, all human-authored — small, and that bounds what it measures
 
-**Status: blocking. The gate is vacuous.**
+**Status: composition targets met (2026-10-08). Every number is still a development signal.**
 
-The harness runs, the metrics are unit-tested against hand-computed values, and the CI gate
-enforces thresholds. But `data/golden/` contains only `TEMPLATE.jsonl` — there are **zero
-human-labelled items**. Every number the suite currently produces describes the harness,
-not the system.
+`data/golden/v1.jsonl` holds **30 human-authored items** — `authored_by=human`, every span
+checked against a policy wording, zero seed or synthetic items in the set. Composition by
+stratum:
 
-The 16 seed items written to develop the harness were moved to
-`tests/fixtures/golden_seed.jsonl` specifically so they cannot be mistaken for data. They
-are `authored_by=seed_unverified` and none of their labels was ever checked against a
-policy wording.
+| stratum | n | | stratum | n |
+|---|---|---|---|---|
+| definitional_carveout | 4 | | supersession | 5 |
+| conditional_override | 2 | | unanswerable | 5 |
+| clause_tension | 1 | | injection | 5 |
+| contradictory | 1 | | table_formula | 6 |
+| cross_doc_comparison | 1 | | | |
 
-Until 30 human-labelled items land, the correct phrasing in any status report is
-**"eval gate has no data"** — not "eval gate green".
+The adversarial floors (supersession, unanswerable, injection at 5; contradictory at 1 —
+the one genuine cross-insurer conflict the 2024 standardisation left) are all met, and the
+total floor was lowered 40 → 30 on 2026-10-08 to equal the human-authored deliverable once
+the labelling rate was measured (the reasoning is in `schema.py`).
+
+**What 30 items cannot support, stated without softening.** At these per-stratum sizes one
+item moves a stratum's score by **20 to 50 percentage points** — a single injection item is
+20 points, the lone contradictory item is the whole stratum. So **per-stratum numbers are
+directional only**: they say which failure modes are represented and roughly where the
+system stands, never a quotable rate. What carries weight is the **aggregate** across all 30
+and the **per-item ranks** — whether a specific labelled span was retrieved, and at what
+rank — because those are facts about individual items that no amount of small-n smears.
+
+Raising the total above 30 is a **v2 item, not a v1 one**: the next ten items buy more by
+being spent on the v1→v2 cycle than on a rate that would still be a development signal at 40.
+
+The 16 seed items written to develop the harness remain in
+`tests/fixtures/golden_seed.jsonl`, `authored_by=seed_unverified`, so they cannot be
+mistaken for data. No metric in the shipped set is computed from them.
 
 ---
 

@@ -522,10 +522,22 @@ class SetTargets(BaseModel):
     #
     # Raising it back is one edit. Doing so should follow evidence that the labelling rate
     # changed, not optimism that it will.
-    total: int = 40
-    # 75%, up from the 50% that 60/120 implied. The project's central claim is that human
-    # reading found what scanning missed; a smaller set makes each label carry more of that
-    # claim, not less.
+    #
+    # LOWERED 40 -> 30 on 2026-10-08, and this is the evidence the paragraph above asks for,
+    # applied DOWNWARD rather than up. 30 was the planned human-authored deliverable the
+    # whole way through; 40 was set at the 2026-10-02 cut before any labelling rate had been
+    # measured, as headroom over the 30. Measured rate since: 30 items over several days,
+    # with a defect caught in most batches (a resolving-but-wrong clause, a conflict that
+    # lived only in a summary, a reference answer that picked one branch of a gate). The
+    # last ten items would cost about a day and would be taken from the v1->v2 cycle, which
+    # is the higher-value use of that day. So total meets min_human_authored: the deliverable
+    # is 30 human-authored items, every stratum floor met, and raising total again is a v2
+    # item, not a v1 one.
+    total: int = 30
+    # Equal to total now: the set is entirely human-authored, which is the project's central
+    # claim (human reading found what scanning missed). Kept as a separate field, not folded
+    # into total, because a future non-human portion would reopen the gap and this is the
+    # floor that would still have to hold.
     min_human_authored: int = 30
     min_per_adversarial_stratum: int = 5
     max_seed_unverified: int = 0

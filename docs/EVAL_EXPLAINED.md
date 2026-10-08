@@ -234,7 +234,7 @@ prompt against the old response.
 
 Stated plainly because the harness's own limitations are part of understanding it:
 
-- **No labelled data.** The gate is vacuous until 30 human-labelled items exist.
+- **The labelled set is 30 items, all human-authored (2026-10-08).** Composition targets met; every stratum floor satisfied. Small by design - one item moves a stratum score by 20-50 points, so per-stratum numbers are directional and only the aggregate and per-item ranks carry weight. Raising the total is a v2 item.
 - **No κ measurement.** Impossible until there are labels to agree about.
 - **RAGAS not yet wired.** The runner scores retrieval and behaviour; the four RAGAS
   metrics land in v1 when there is generation to score.

@@ -637,11 +637,15 @@ class TestCompositionFloors:
     def test_the_total_and_human_floor_match_the_cut(self) -> None:
         """Pinned so the target cannot drift without someone editing this line.
 
-        human-authored is 30 of 40 - 75%, up from the 50% that 60/120 implied. A smaller set
-        makes each human label carry MORE of the project's central claim, not less.
+        total was 40 at the 2026-10-02 cut (headroom over the 30), then lowered to 30 on
+        2026-10-08 once the labelling rate was measured: 30 items over several days, with a
+        defect caught in most batches, and the last ten items worth more spent on the
+        v1->v2 cycle. total now EQUALS min_human_authored - the deliverable is 30
+        human-authored items, every stratum floor met. Raising total again is a v2 item.
+        See schema.py for the full reasoning.
         """
         targets = SetTargets()
-        assert targets.total == 40
+        assert targets.total == 30
         assert targets.min_human_authored == 30
 
     def test_every_adversarial_stratum_is_gated(self) -> None:

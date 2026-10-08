@@ -1088,7 +1088,14 @@ Deferred to v2, each with the reason it was deferred rather than dropped:
 4. Wrong-answer to abstain cost ratio ≈ **50:1**. This single number calibrates the F7 threshold. If
    it is really 5:1 the system should be far more willing to answer, and I would tune differently.
 5. Latency targets in §9.
-6. Golden set is **120 items**: 60 llm_verified across strata 1–10, 60 hand-authored, of which
-   strata 11–13 are entirely yours (~15 unanswerable, ~15 contradictory, ~10 injection).
+6. Golden set — PLANNED **120 items**, DELIVERED **30, all human-authored** (2026-10-08).
+   The target was cut 120 → 40 on 2026-10-02 after the labelling rate was measured against
+   `SetTargets`, then 40 → 30 on 2026-10-08 to equal the human-authored deliverable (the
+   step-by-step reasoning is in `src/arag/eval/schema.py`). The delivered set is entirely
+   `authored_by=human` with every stratum floor met; the llm_verified portion the original
+   plan allowed was never built, so there is no synthetic content in the shipped set.
+   Raising the total is a v2 item. At 30 items, per-stratum numbers are directional only
+   (one item = 20–50 points); the aggregate and per-item ranks are what carry weight — see
+   LIMITATIONS.
 7. GitHub Actions is available.
 8. Timeline unknown, so slices are sized at roughly 4–8 hours each.
