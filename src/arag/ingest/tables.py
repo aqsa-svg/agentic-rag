@@ -432,6 +432,48 @@ def to_markdown(table: ExtractedTable, rows: tuple[tuple[str, ...], ...] | None 
     return "\n".join(out)
 
 
+def _is_data_row(row: tuple[str, ...]) -> bool:
+    """A data row's first non-empty cell carries a value (a digit); a header row's does not.
+
+    Used to recover a caption-as-header: find_tables sometimes takes a single-cell TITLE row
+    as the header (e.g. "Delivery and New Born"), pushing the real column names - "Sum
+    Insured", "Normal Delivery", "Delivery by Ceasarean Section" - down into data rows. The
+    row serialiser then labels every column "value" and the axes (sum-insured band, delivery
+    type) vanish from the sentence, so a query for "caesarean delivery" matches nothing.
+    Measured on star-comprehensive-2025 p14 (h-10) and p14 vaccination (h-09).
+    """
+    first = next((c.strip() for c in row if c.strip()), "")
+    return any(ch.isdigit() for ch in first)
+
+
+def _recover_caption_header(
+    header: list[str], rows: list[tuple[str, ...]]
+) -> tuple[list[str], list[tuple[str, ...]], str | None]:
+    """If the header is a single-cell caption, promote and merge the real column-name rows.
+
+    Returns (header, remaining_rows, recovered_caption). Only fires when the header has at
+    most one non-empty cell AND the leading rows are header-like (no value in the first
+    cell), so an ordinary table is untouched. Multi-row headers (a column group over a
+    sub-header, as in Normal/Caesarean under "Limit for Delivery") are merged column-wise so
+    both levels survive into the sentence.
+    """
+    if sum(1 for c in header if c.strip()) > 1:
+        return header, rows, None
+    caption = next((c.strip() for c in header if c.strip()), None)
+    hdr_rows: list[tuple[str, ...]] = []
+    rest = list(rows)
+    while rest and not _is_data_row(rest[0]):
+        hdr_rows.append(rest.pop(0))
+    if not hdr_rows:
+        return header, rows, None
+    ncols = max(len(header), *(len(r) for r in hdr_rows))
+    merged = [
+        " ".join(r[i].strip() for r in hdr_rows if i < len(r) and r[i].strip())
+        for i in range(ncols)
+    ]
+    return merged, rest, caption
+
+
 def to_row_sentences(table: ExtractedTable) -> list[str]:
     """One natural-language sentence per row, header names inline.
 
@@ -443,9 +485,12 @@ def to_row_sentences(table: ExtractedTable) -> list[str]:
     if not table.has_header:
         raise HeaderlessTableError(table.table_id, "no header row available")
 
-    header = list(table.header)
+    header, rows_list, recovered = _recover_caption_header(list(table.header), list(table.rows))
+    label = table.context_label()
+    if recovered and recovered.lower() not in label.lower():
+        label = f"{label}, {recovered}"
     sentences: list[str] = []
-    for row in table.rows:
+    for row in rows_list:
         cells = list(row) + [""] * (len(header) - len(row))
         pairs = [
             (header[i].strip(), cells[i].strip())
@@ -464,7 +509,7 @@ def to_row_sentences(table: ExtractedTable) -> list[str]:
             sentence = f"{lead}: {clauses}."
         else:
             sentence = f"{lead}."
-        sentences.append(f"[{table.context_label()}] {sentence}")
+        sentences.append(f"[{label}] {sentence}")
     return sentences
 
 

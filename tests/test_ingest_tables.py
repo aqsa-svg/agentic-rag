@@ -251,6 +251,41 @@ class TestT3Serialisations:
     def test_row_sentences_skip_empty_rows(self) -> None:
         assert len(to_row_sentences(table(rows=(("", ""), ("5,00,000", "1%"))))) == 1
 
+    def test_caption_as_header_is_recovered_so_both_axes_survive(self) -> None:
+        """h-10: find_tables took the TITLE row as the header, losing the column axes.
+
+        The star-2025 Delivery table has a title row ("Delivery and New Born") that
+        find_tables returned AS the header, pushing the real column names - Sum Insured,
+        Normal Delivery, Delivery by Ceasarean Section - into data rows. Every column then
+        serialised as "value is X", so "caesarean" never appeared and a query for it matched
+        nothing; row-NL missed h-10. The serialiser now promotes the real column-name rows
+        (merging a column group over its sub-header) and keeps the title as the caption.
+        """
+        caption_headed = table(
+            header=("Delivery and New Born", "", "", ""),
+            rows=(
+                ("Sum Insured Rs.", "Limit for Delivery", "", "New Born liability"),
+                ("", "Normal Delivery Rs.", "Delivery by Ceasarean Section Rs.", ""),
+                ("10,00,000 to 25,00,000", "30,000", "50,000", "1,00,000"),
+            ),
+        )
+        sentences = to_row_sentences(caption_headed)
+        # one DATA row only; the two header rows were consumed, not serialised as data
+        assert len(sentences) == 1
+        s = sentences[0]
+        # both axes present: the sum-insured band AND the caesarean column name + its value
+        assert "10,00,000 to 25,00,000" in s
+        assert "Ceasarean" in s and "50,000" in s
+        assert "value is" not in s, "columns must be named, not labelled 'value'"
+        # the title survives as context, carrying the subject term for retrieval
+        assert "Delivery and New Born" in s
+
+    def test_an_ordinary_header_is_left_untouched(self) -> None:
+        """The recovery only fires on a single-cell caption; a normal table is unchanged."""
+        sentences = to_row_sentences(table())
+        assert "For Sum Insured 5,00,000" in sentences[0]
+        assert "Room Rent Limit is 1% of SI" in sentences[0]
+
     def test_row_nl_produces_one_chunk_per_row(self) -> None:
         rows = tuple((f"{i}", f"{i}%") for i in range(5))
         chunks = table_chunks(table(rows=rows), serialisation="row_nl")

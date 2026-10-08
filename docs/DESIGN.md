@@ -449,6 +449,36 @@ tiny). The pre-registered prediction scored 2 held, 3 failed, 1 held-in-directio
 overall "no single winner" is wrong *on quality* — markdown is the single quality winner —
 while remaining a genuine trade-off once cost is counted.
 
+##### Mechanism checks (2026-10-08), and a serialiser defect found and fixed
+
+Before trusting the decision, the two surprising per-item results were traced to their
+cause rather than left as numbers.
+
+**h-10 was a serialiser defect, not a row-NL disadvantage — fixed, and the verdict flips.**
+`find_tables` returned the Delivery table's TITLE row (`Delivery and New Born`) as the
+header, pushing the real column names - Sum Insured, Normal Delivery, Delivery by Ceasarean
+Section - down into data rows. The row serialiser then rendered every column as *"value is
+X"*, so the word "caesarean" never appeared in any sentence and a query for it matched
+nothing: row-NL *missed* h-10. `to_row_sentences` now detects a single-cell caption header,
+promotes and column-wise merges the real header rows, and keeps the title as the caption.
+The caesarean cell now serialises as *"For Sum Insured Rs. 10,00,000 to 25,00,000: ...
+Delivery by Ceasarean Section Rs. is 50,000"*. Re-scored: **row-NL h-10 went from a miss to
+rank 2**, ahead of markdown's rank 3 — so the prediction (row-NL slightly ahead) **HELD**
+once the defect was removed, and the markdown-only table-only aggregate for row-NL rose from
+recall 0.417 to **0.750**, level with markdown. The original "markdown wins decisively" was
+partly an artefact of this bug. (Markdown was unaffected: its whole-table chunk always held
+the word "caesarean", which is why it retrieved h-10 even with the broken header.)
+
+**h-11 verdict: HELD (was held-in-direction).** Row-NL's top 5 for "per OPD consultation at
+Rs 10 lakh" carry the per-policy-period (annual) rows - the Rs 2,100-class figures at ranks
+3 and 5 - while the "Rs 300 per consultation" cap does not appear in the top 5 at all. So
+row-NL does surface the annual figure above the per-visit cap, exactly the trap the item was
+built to catch. Confirmed, not just directional.
+
+This is the mid-course finding the provisional decision anticipated: the row-NL leg was
+carrying a serialiser bug, so its first T3 numbers understated it. The dense and hybrid
+re-run below is scored on the FIXED serialiser.
+
 **Decision: index markdown — PROVISIONAL, BM25 leg only.** Both indexes are kept. Row-NL's
 token saving is real but does not pay for the quality loss *on the BM25 leg*, and markdown's
 whole-table chunk is better answer context. But this is decided on one retriever, and the
