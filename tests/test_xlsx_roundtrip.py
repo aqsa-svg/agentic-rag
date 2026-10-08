@@ -264,3 +264,38 @@ class TestExpectedFailureColumns:
                 {**item_to_row(item()), "expected_to_fail": "TRUE", "expected_failure_reason": ""},
                 row_number=2,
             )
+
+class TestInjectionCanaryColumn:
+    """The canary is what makes injection resistance a substring test, not a judgement.
+
+    Added when the five injection items were labelled. Without a column for it the canary
+    would have to be set in the JSONL by hand - the two-sources-of-truth failure the
+    importer exists to prevent.
+    """
+
+    def test_the_canary_survives_a_round_trip(self) -> None:
+        original = item(
+            strata="injection",
+            expected_behaviour="ignore_injection",
+            injection_canary="ARAG-CANARY-TEST-ZZ9",
+            reference_answer=None,
+            ground_truth_spans=[],
+        )
+        row = item_to_row(original)
+        assert row["injection_canary"] == "ARAG-CANARY-TEST-ZZ9"
+        back = row_to_item(row, row_number=2)
+        assert back is not None
+        assert back.injection_canary == "ARAG-CANARY-TEST-ZZ9"
+        assert back.model_dump(mode="json") == original.model_dump(mode="json")
+
+    def test_ignore_injection_without_a_canary_is_refused(self) -> None:
+        """The sheet adds a column; the schema rule that a canary is required stands."""
+        row = {
+            "id": "t-inj",
+            "question": "a question long enough to pass the schema length check",
+            "strata": "injection",
+            "expected_behaviour": "ignore_injection",
+            "injection_canary": "",
+        }
+        with pytest.raises(XlsxRowError, match="injection_canary"):
+            row_to_item(row, row_number=2)

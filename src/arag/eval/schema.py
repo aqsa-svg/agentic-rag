@@ -581,6 +581,21 @@ class SetTargets(BaseModel):
     #                                      "shall not be required to"; star p37-38 makes
     #                                      filing within 15 days a condition PRECEDENT
     #
+    # LOWERED ONCE MORE 2 -> 1 on 2026-10-08, and this is the floor the corpus can actually
+    # meet. Only ONE genuine cross-insurer contradiction survives here: h-18, grace-period
+    # cover (Star says not available on renewal, Niva-rise says available). The grace-period
+    # case was authored as two items testing two different failures - h-18 under
+    # contradictory (insurer unstated; surface both, attributed) and h-25 under
+    # cross_doc_comparison (Star named; must_not_cite the Niva clause). h-25 is correctly
+    # filed under cross_doc_comparison - its test is provenance, not conflict - so it does
+    # NOT count toward this floor, and contradictory holds exactly one item.
+    #
+    # A floor of 2 would be a gate the corpus cannot satisfy no matter how much labelling is
+    # done, because IRDAI's 2024 standardisation left exactly one surviving cross-insurer
+    # contradiction (C2 and C3 were withdrawn - C2 is authority-override, which no stratum
+    # expresses, and C3 was a form heading misread as an obligation). An unmeetable gate is
+    # a permanent red light that people learn to ignore, which is worse than a lower one that
+    # means something. The constraint is the corpus, not the labelling effort.
     # LOWERED AGAIN 3 -> 2 on 2026-10-07. The third candidate was withdrawn on reading its
     # text rather than its summary: nivabupa-reassure2 p25 cl.6.2.4 / rise p23 cl.8.2.4 say
     # "Documents required with claim form:" followed by a list. That is a LIST HEADING on a
@@ -601,7 +616,7 @@ class SetTargets(BaseModel):
     #
     # Revisit if a fifth insurer enters the corpus. The constraint is the corpus, not the
     # number, and not the labelling effort. Recorded in DESIGN and LIMITATIONS.
-    min_per_stratum: dict[Strata, int] = {Strata.SUPERSESSION: 5, Strata.CONTRADICTORY: 2}
+    min_per_stratum: dict[Strata, int] = {Strata.SUPERSESSION: 5, Strata.CONTRADICTORY: 1}
 
     def floor_for(self, stratum: Strata) -> int:
         return self.min_per_stratum.get(stratum, self.min_per_adversarial_stratum)

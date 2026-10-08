@@ -51,6 +51,7 @@ COLUMNS = (
     "must_not_cite",
     "expected_to_fail",
     "expected_failure_reason",
+    "injection_canary",
     "notes",
     "authored_by",
     "as_of_date",
@@ -197,6 +198,9 @@ def row_to_item(row: dict[str, Any], *, row_number: int) -> GoldenItem | None:
     reason = _cell(row.get("expected_failure_reason"))
     if reason:
         payload["expected_failure_reason"] = reason
+    canary = _cell(row.get("injection_canary"))
+    if canary:
+        payload["injection_canary"] = canary
 
     try:
         return GoldenItem(**payload)
@@ -219,6 +223,7 @@ def item_to_row(item: GoldenItem) -> dict[str, Any]:
         "must_not_cite": SEP.join(item.must_not_cite),
         "expected_to_fail": "TRUE" if item.expected_to_fail else "",
         "expected_failure_reason": item.expected_failure_reason or "",
+        "injection_canary": item.injection_canary or "",
         "notes": item.notes or "",
         "authored_by": item.authored_by.value,
         "as_of_date": item.as_of_date.isoformat() if item.as_of_date else "",
@@ -311,6 +316,7 @@ def write_xlsx(path: Path, items: list[GoldenItem], pending: list[dict[str, Any]
         "must_not_cite": 34,
         "expected_to_fail": 14,
         "expected_failure_reason": 44,
+        "injection_canary": 28,
         "notes": 44,
         "authored_by": 14,
         "as_of_date": 12,

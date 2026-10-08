@@ -566,7 +566,7 @@ The floor went 3 → 2 rather than keeping a candidate that reads as a position 
 summary — which is the failure mode this whole document is about, appearing in the survey
 that was meant to find it.
 
-**The floor was therefore lowered — to 3, then to 2 — rather than filled.** Two options were available and
+**The floor was therefore lowered — to 3, then to 2, then to 1 — rather than filled.** The final step (2 -> 1, 2026-10-08) recognises that the grace-period conflict was authored as two items: h-18 under `contradictory` (insurer unstated) and h-25 under `cross_doc_comparison` (Star named, provenance test). h-25 does not count toward this floor, so `contradictory` holds exactly one genuine cross-insurer conflict - which is all IRDAI's 2024 standardisation left in this corpus. A floor of 2 would be unmeetable by any amount of labelling, and an unmeetable gate is a permanent red light people learn to ignore. Two options were available and
 both were refused: widening to `nivabupa-rise` against `nivabupa-reassure2` — two products
 from one insurer, which is not the failure the stratum exists to catch — and relaxing what
 counts as a disagreement until five fit. A composition gate that can be satisfied by

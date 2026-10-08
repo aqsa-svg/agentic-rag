@@ -176,21 +176,22 @@ and it grows linearly with items already filed under an ambiguous name.
 
 ## The `contradictory` floor is corpus-limited, not effort-limited
 
-Lowered from 5 to 3, then to 2, on 2026-10-07 — first after a systematic survey, then
+Lowered from 5 to 3 to 2 (2026-10-07), then to 1 (2026-10-08) — first after a systematic survey, then
 after reading the third candidate's actual text rather than its summary (a list heading on
 a claim form, not an obligation clause). Reasoning in `docs/DESIGN.md`. Stated here because it is a limitation of what can be measured, not a
 design choice.
 
 IRDAI's 2024 standardisation mandates the wording for grace period, free look, moratorium,
 cancellation, portability and claim settlement, so those clauses are verbatim-identical
-across all four insurer documents. Only two genuine cross-source contradictions survive in this corpus, and both are places
+across all four insurer documents. Only ONE genuine cross-source contradiction survives in this corpus as a `contradictory` item (h-18, grace-period cover); the second grace-period item, h-25, is filed under `cross_doc_comparison` because its test is provenance, not conflict. Both are places
 where an insurer retained a pre-standardisation term. One of the two — the claim-document
 conflict — has a contested premise of its own: its counterparty is the REGULATOR rather
 than another insurer, and nothing in this system encodes that a regulator outranks an
 insurer. See the authority-override note in `docs/DESIGN.md`.
 
-**What this costs:** any cross-insurer contradiction rate computed from two items is a
-development signal and nothing more — one item moves it by 50 percentage points. The
+**What this costs:** a cross-insurer contradiction rate computed from a single item is not a
+rate at all — the stratum can only demonstrate that the system surfaces the one conflict the
+corpus contains, never how often it does across many. The
 stratum demonstrates that the system can surface a conflict; it cannot support a claim
 about how often it does.
 
