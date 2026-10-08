@@ -720,6 +720,87 @@ you can name the metric that would have changed your mind.
 outside that package imports LangChain. Framework choice is therefore reversible in fact, not just
 in aspiration — and that claim is enforced by an import-linter test.
 
+#### What the graph deliberately does NOT contain, and why (2026-10-08)
+
+The graph was designed against the 30 labelled items, not against a framework tutorial, so
+three features a tutorial would add are **excluded by decision, not by omission** — the same
+discipline as the reranker rejection in §5.5: a thing is left out because no measurement asks
+for it, and the reasoning is recorded so a later reader does not add it back as an oversight.
+
+- **No ReAct / tool-selection loop.** There is exactly one tool — retrieval. A loop that
+  chooses among tools is overhead with one tool, and it moves control flow from a legible
+  graph into model tokens, which is the thing §5.7 rejected CrewAI/AutoGen for. Revisit when
+  a second tool (a calculator for `table_formula` arithmetic, a schedule lookup) is actually
+  wired.
+- **No multi-hop planner.** No `multihop_temporal` item is labelled yet; the closest is the
+  two-span stitch of a `table_formula` grid, which retrieval handles in one pass. A planner
+  with no multi-hop item to justify it is resume-padding — the §1 argument turned on itself.
+- **No generic "reflect" node.** The verify node is specific — grounding, must-not-cite,
+  canary — not a free-form self-critique. A reflect node that re-asks "is this good?" adds a
+  model call and a failure mode (it can talk itself out of a correct answer) for no item that
+  needs it.
+
+Each is a one-node addition the day an item demands it. Recording the absence is what keeps
+"we chose not to" distinct from "we forgot" — and makes the graph's simplicity a defensible
+position rather than a gap.
+
+#### The sufficiency gate was measured BEFORE building, and the signal failed (2026-10-08)
+
+The design put abstention partly on a pre-generation gate: dense top-1 cosine plus the
+top1-top2 gap, below a calibrated threshold → abstain. Before writing it, the signal was
+measured against all 30 items - the 5 `unanswerable` items as the true positives (should
+decline), the 25 others as the false-positive set (should answer), because a threshold tuned
+only on items that should abstain over-abstains, and over-abstention is the failure that
+looks like safety. **The signal does not separate them.**
+
+| group | top-1 cosine (mean, range) | top1-top2 gap (mean, range) |
+|---|---|---|
+| should abstain (5) | 0.658  [0.614, 0.715] | 0.003  [0.001, 0.009] |
+| should answer (25) | 0.731  [0.615, 0.867] | 0.015  [0.000, 0.064] |
+
+The abstain top-1 range sits **entirely inside** the answer range. h-01 - answerable,
+retrieved correctly at recall 1.0 - has top-1 0.615, *lower than every one of the five items
+that should decline*. The gap is near-zero for almost everything (dense cosine over
+homogeneous legal prose produces no decisive winner). The trade-off curve has no good point:
+
+```
+top-1 threshold   abstain-recall (of 5)   answer-retention (of 25)   answers wrongly declined
+0.66              0.40                    0.84                       4
+0.671 (best)      0.60                    0.80                       5
+0.68              0.60                    0.72                       7
+0.72              1.00                    0.48                       13
+```
+
+The best balance catches 3 of 5 unanswerables while wrongly declining 5 of 25 answerables;
+catching all 5 costs 13 of 25 answers. **Neither top-1 nor the gap correlates with
+correctness either** - the answerable items that retrieve nothing (the supersession-by-
+absence spans, h-32/h-33/h-14, recall 0) score in the same band as the ones that retrieve
+perfectly, so the geometric signal cannot even tell "retrieved the answer" from "retrieved a
+topical decoy." That is the whole failure in one sentence: a bi-encoder scores *aboutness*,
+and these unanswerables return chunks that ARE about the topic (Zone A-E is about geography,
+Section 80-D is about tax) - they simply do not answer the question.
+
+**Design consequence, forced by the measurement, not chosen for elegance.** The pre-
+generation sufficiency gate is removed. Abstention moves to where the decision is actually
+semantic:
+
+- **Pre-generation** keeps only the degenerate guard: retrieval returns literally nothing
+  (empty candidate set) → abstain. No threshold, because there is no threshold worth setting.
+- **Post-generation (the verify node) does the real work:** the generator attempts an answer
+  under instruction to decline if the passages do not support one; the verifier then requires
+  every claim to be grounded in a retrieved span AND the answer to be responsive to the
+  question, and a model that returns the documented "not in these documents" is accepted as an
+  abstention (not re-read as the string answer "null" - instance 10). An ungrounded or
+  non-responsive attempt becomes an abstention with a distinct reason.
+
+This is the two-entry abstention from the design, but with the entries re-weighted by what
+the corpus permits: the geometric entry shrinks to the empty-set case, and the semantic entry
+carries the load. The cross-encoder reranker COULD score aboutness-vs-answers better (it
+scores query+passage jointly), but it was rejected on latency in §5.5, and reintroducing it
+only as an abstention gate would pay 4 seconds for a gate the post-generation check does for
+the cost of the generation already being made. The threshold that was going to be calibrated
+on day 7 does not exist to calibrate; the day-7 sweep is now the cost-ratio one alone.
+
 ### 5.8 Generation and judge models
 
 | Role | Choice | Trade-off accepted |
