@@ -284,7 +284,22 @@ def validate(
         )
         typer.echo("")
     else:
-        typer.secho("  composition targets met", fg=typer.colors.GREEN)
+        # FINAL, not merely "met this run". The set is the planned deliverable - 30
+        # human-authored items, every stratum floor satisfied - and raising the total is a
+        # v2 decision (SetTargets.total, DESIGN §7 assumption 6), not an unfinished v1 gap.
+        # Stated this way so a later reader cannot mistake a complete set for an incomplete
+        # one, the way the count was briefly misread on 2026-10-08.
+        human = gs.provenance_counts().get("human", 0)
+        typer.secho(
+            f"  COMPOSITION COMPLETE - v1 golden set FINAL at {len(gs.items)} items "
+            f"({human} human-authored), every stratum floor met.",
+            fg=typer.colors.GREEN,
+        )
+        typer.secho(
+            "  Not an in-progress target: growing the set past this is a v2 item, not a v1 "
+            "shortfall. Metrics remain development-signal at this size (see LIMITATIONS).",
+            fg=typer.colors.GREEN,
+        )
         typer.echo("")
 
     if unusable:
