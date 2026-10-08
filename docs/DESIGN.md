@@ -397,6 +397,50 @@ labels that make this comparison scorable.
 Expected overall: **no single winner.** Row-NL suits single-row lookups, markdown suits
 multi-row answers.
 
+##### Result (2026-10-08, `data/t3_measure.json`), scored BM25-only on the 19 answer items
+
+Retrieval-only comparison: same BM25 retriever over both serialisations, so the delta is
+the serialisation's doing. Rank = position of the first retrieved chunk covering a
+ground-truth span; `-` = miss within k=10.
+
+| item | markdown | row-NL | prediction | verdict |
+|---|---|---|---|---|
+| h-06 | 8 | **1** | row-NL wins/ties | **HELD** |
+| h-07 | 1 | 1 | markdown wins | **FAILED** (tied, both rank 1) |
+| h-08 | **1** | 2 | markdown wins | **HELD** |
+| h-09 | **1** | – | fails under both | **FAILED** (markdown rank 1; the caption-header defect is upstream of *answer* extraction, not retrieval) |
+| h-10 | **3** | – | row-NL slightly ahead | **FAILED** (markdown won, row-NL missed) |
+| h-11 | **1** | 5 | row-NL at risk | **HELD in direction** (row-NL worse; the specific 2,100-before-300 row order is unverified) |
+
+Aggregate, all 19 answer items, with tokens/query beside quality:
+
+| metric | markdown | row-NL |
+|---|---|---|
+| recall@10 | **0.500** | 0.447 |
+| MRR | **0.400** | 0.328 |
+| nDCG@10 | **0.443** | 0.368 |
+| tokens/query (top-10 context) | 1645 | **1156** (−29.7%) |
+| total chunks | 1024 | 2537 (2.5×) |
+
+**The going-in expectation was falsified.** DESIGN predicted markdown would retrieve *badly*
+("mostly pipes and digits") and row-NL far better. The opposite held: **markdown won all
+three quality metrics.** Row-NL's only win is cost — 29.7% fewer tokens in the retrieved
+context, because each row chunk is small (it produces 2.5× as many chunks but each is
+tiny). The pre-registered prediction scored 2 held, 3 failed, 1 held-in-direction, and the
+overall "no single winner" is wrong *on quality* — markdown is the single quality winner —
+while remaining a genuine trade-off once cost is counted.
+
+**Decision: index markdown**, by the number, as T3 said it would be. Row-NL's token saving
+is real but does not pay for a 5–7 point quality loss at this corpus size, and markdown's
+whole-table chunk is better answer context anyway. Row-NL is kept available behind the
+serialisation flag, not shipped.
+
+**Scope of the claim, stated plainly.** This is BM25-only; it does NOT test the dense-
+embedder half of the original concern (that a markdown table embeds poorly). A dense or
+hybrid re-run could move it, and that is a v2 measurement. At 19 items one span moves
+recall by ~5 points, so these are directional — the per-item ranks are the firmer evidence,
+and the token delta is exact.
+
 #### Text normalisation (added after spike S5)
 
 S5 found 269 ligature codepoints (U+FB00–06), concentrated in `star-comprehensive-2021`. `beneﬁt`
