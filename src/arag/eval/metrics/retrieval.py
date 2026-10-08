@@ -97,7 +97,25 @@ def ndcg_at_k(
     if not truths:
         return None
     window = chunks[:k]
-    rel = matcher.relevance_vector(window, truths)
+    # Each labelled span is credited ONCE, at the rank of the first chunk that covers it.
+    # `relevance_vector` marks EVERY chunk covering a truth as relevant, so when several
+    # retrieved chunks cover the same clause - common, since one clause spans several chunks
+    # - the gain is counted repeatedly and DCG exceeds IDCG, returning nDCG > 1. Measured:
+    # one truth covered by three chunks gave nDCG 2.13. Deduplicating to the first-covering
+    # chunk is what "binary gain, ideal places min(len(truths), k) relevant items first"
+    # (the docstring) actually means. On the distinct-truth/distinct-chunk cases the old
+    # tests used, this is identical; it differs only on the multi-chunk-per-truth case they
+    # never exercised.
+    seen: set[int] = set()
+    rel: list[int] = []
+    for chunk in window:
+        covers_new = {
+            ti
+            for ti, truth in enumerate(truths)
+            if ti not in seen and matcher.matches_chunk(chunk, truth)
+        }
+        rel.append(1 if covers_new else 0)
+        seen |= covers_new
     dcg = sum(r / log2(i + 2) for i, r in enumerate(rel))
     ideal_n = min(len(truths), k)
     idcg = sum(1.0 / log2(i + 2) for i in range(ideal_n))

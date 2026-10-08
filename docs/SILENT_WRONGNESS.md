@@ -825,6 +825,23 @@ CI run, not about the commands you happened to run locally; it is unverified unt
 is read.** A local `pytest` is to the PR gate what a prose summary is to the clause - a
 convenience that is not the thing itself.
 
+**The corollary found the same day: the nightly was decorative too.** When the PR gate
+turned out red, the fallback belief was "quality still lives in the nightly, which is
+green." It does not. The nightly has run three times and failed all three, and it runs
+`arag-eval run --engine null` - the null engine - despite a job named "Nightly full eval
+(live models)." No live engine is even wired into the registry. So the sharper statement is
+the one worth keeping: **no quality number has gated a merge on any commit in this project's
+history.** Both the PR gate and the nightly have been red since day one, and the one that
+was green-looking enough to be trusted was trusted on its name, not its command.
+
+And the half that balances it, because the failure was in the gating, not the work: **the
+measurements were real.** The baselines, the supersession and serialisation findings, the
+T3 numbers - all were computed by running the harness locally and reading what it produced,
+and they stand. What was decorative was the *gate* - the automated promise that those
+numbers would block a regression. The harness worked; the turnstile in front of it was not
+plugged in. Saying only the first half ("nothing was gated") would be as inaccurate as the
+original overclaim, in the other direction.
+
 ---
 
 ## What this pattern implies for how the project is built

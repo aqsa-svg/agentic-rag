@@ -519,6 +519,100 @@ hybrid re-run could move it, and that is a v2 measurement. At 19 items one span 
 recall by ~5 points, so these are directional — the per-item ranks are the firmer evidence,
 and the token delta is exact.
 
+---
+
+##### FINAL T3 result (2026-10-08, `data/t3_final.json`), fixed serialiser, corrected nDCG, bm25/dense/hybrid
+
+Everything above this line was computed before three upstream defects were fixed, and the
+conclusion it reached is wrong. Kept as the record of how the answer moved. What changed:
+the **serialiser caption-header bug** (row-NL lost table axes - see the mechanism checks),
+the **nDCG metric** (it summed per-chunk relevance, so a clause spanning several retrieved
+chunks pushed nDCG above 1; `ndcg_at_k` now credits each span once, pinned by a hand-computed
+test), and the **gate** (red from day one, now green). No index decision was recorded off the
+red tree; this is the first one taken against green.
+
+**Table-only (h-06 to h-11), recall / MRR / nDCG, k=10. Pre-fix row-NL shown beside post-fix
+so the serialiser fix is separable from the retriever.**
+
+| retriever | markdown | row-NL (pre-fix) | row-NL (post-fix) |
+|---|---|---|---|
+| bm25 | 0.750 / 0.743 / 0.653 | 0.417 / 0.450 / 0.333 | **0.750 / 0.750 / 0.670** |
+| dense | 0.750 / 0.597 / 0.566 | — | **0.750 / 0.722 / 0.632** |
+| hybrid | 0.750 / 0.746 / **0.655** | — | 0.750 / 0.750 / 0.646 |
+
+tokens/query: row-NL −19.3% table-only, −29.7% over the 19-item set (exact, not noise).
+Markdown is unaffected by the serialiser fix, so it has one column.
+
+**The serialiser fix, not the retriever, is what moved the answer.** Pre-fix row-NL BM25 was
+0.417 recall; post-fix it is 0.750 - level with markdown - because the caption-header bug had
+been dropping the table axes. Once removed, row-NL is **level on recall (0.750 everywhere) and
+ahead on MRR and nDCG under bm25 and dense**, with markdown only a hair ahead on hybrid nDCG
+(0.655 vs 0.646). The dense/hybrid dimension matters far less than the one-line serialiser fix.
+
+**Per-item rank** (md bm25/dense/hybrid | row-NL pre-fix bm25 | row-NL post-fix bm25/dense/hybrid):
+
+```
+h-06  md 8/4/7    | pre 1 | post 2/3/2     h-09  md 1/1/1  | pre - | post 1/1/1
+h-07  md 1/2/1    | pre 1 | post 1/1/1     h-10  md 3/3/3  | pre - | post 2/2/2
+h-08  md 1/1/1    | pre 2 | post 2/1/1     h-11  md 1/2/1  | pre 5 | post 1/2/2
+```
+
+**Prediction 1 (per-item, pre-registered before the BM25 run) - scored:**
+
+- h-06 row-NL wins/ties → **HELD** (2 vs 8 bm25).
+- h-07 markdown wins → **FAILED** (tie, both rank 1).
+- h-08 markdown wins → **HELD** (md 1, rn 2 bm25).
+- h-09 fails under both → **FAILED** (markdown rank 1; it fails at *answer*, not retrieval).
+- h-10 row-NL slightly ahead → **FAILED as first measured, HELD after the serialiser fix** (the miss was the bug; post-fix rn 2 beats md 3).
+- h-11 row-NL at risk → **HELD** (confirmed by mechanism check: annual row above per-visit).
+
+**Prediction 2 (dense/hybrid, pre-registered before the dense run) - scored, including the
+overall call that was mine:**
+
+- "row-NL narrows/closes the gap on single-row items (h-06, h-10) under dense" → **HELD**
+  (h-06 rn dense 3 vs md 4; h-10 rn dense 2 vs md 3 - row-NL ahead on both).
+- "markdown keeps h-07/h-08" → **FAILED** (h-07 dense: rn 1 beats md 2; h-08 dense: tie).
+- "h-11 row-NL dense ranks the per-visit row above the annual-cap row more than bm25 did" →
+  **FAILED** (row-NL h-11 is rank 1 under bm25, rank 2 under dense - dense did not improve it).
+- "hybrid beats both single retrievers on table-only recall@10" → **FAILED** (recall is tied
+  at the 0.750 ceiling for all three retrievers; hybrid wins on MRR/nDCG, not recall).
+- "overall: markdown's BM25 edge is partly term coverage, so the gap shrinks under dense but
+  does NOT reverse; markdown stays ahead or level" → **FAILED.** Post-fix, row-NL is ahead on
+  MRR and nDCG under bm25 and dense, not merely level. The gap did not just shrink - it
+  reversed in row-NL's favour, because the thing suppressing row-NL was a serialiser bug, not
+  an embedding weakness. My own overall call was wrong in the same direction as the original
+  DESIGN expectation, for the opposite reason.
+
+**h-09's `expected_to_fail`, answered concretely, and it IS serialisation-dependent - or was.**
+Pre-fix it was the clean split: markdown retrieved h-09 at rank 1 (its whole-table chunk held
+the caption term "vaccination"), row-NL **missed it entirely** (the caption was eaten as the
+header, so no row sentence carried "vaccination"). That is a serialisation-dependent retrieval
+outcome, and flattening it to one verdict would have hidden the most interesting state. The
+serialiser fix recovers the caption into the row-NL context label, so **post-fix both retrieve
+h-09 at rank 1 under every retriever** - the serialisation dependence is gone *in retrieval*.
+The `expected_to_fail` tag was never about retrieval, though: it is about the **answer** stage,
+mapping a given Sum Insured to the right row when the extracted header is a caption. T3 scores
+retrieval, not answers, so it neither confirms nor clears that tag - it stands, pending a
+generation engine, now narrowed to "band-to-row mapping" rather than "retrieval".
+
+**INDEX DECISION (first taken against a green tree): index row-NL.** On the fixed serialiser
+it is level with markdown on recall, ahead on MRR and nDCG under bm25 and dense, within noise
+on hybrid, and **19-30% cheaper per query** - and the token saving is the one number here that
+is exact rather than directional. The honest caveat: at six table items one item moves a
+stratum metric by 20-50 points, so the quality numbers are directional and the quality gap is
+inside the noise; what breaks the tie is the token cost, which is measured, not estimated.
+Both indexes stay built behind the serialisation flag; the change from the provisional
+"markdown" is the whole point of having fixed the three things upstream of the measurement
+before trusting it.
+
+**The pattern, named for the third time.** This is the third published conclusion in this
+project overturned by fixing something UPSTREAM of the measurement rather than re-running it:
+the chunker/matcher clause-id blindness (instance 9) made retrieval look broken when the
+labels were unmatchable; the serialiser caption bug made row-NL look worse than markdown; and
+a gate that was never green made "644 passed, ruff clean" mean less than it read. Each time the
+fix changed the ANSWER, not merely the number - which is the argument, restated, for spending
+effort upstream of a measurement before spending it on the measurement.
+
 #### Text normalisation (added after spike S5)
 
 S5 found 269 ligature codepoints (U+FB00–06), concentrated in `star-comprehensive-2021`. `beneﬁt`

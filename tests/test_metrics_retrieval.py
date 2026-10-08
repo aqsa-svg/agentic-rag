@@ -74,6 +74,43 @@ class TestNdcg:
         truths = (truth("d1", "4.2"), truth("d1", "2.1"), truth("d1", "3.3"))
         assert ndcg_at_k(chunks, truths, 1, M) == pytest.approx(1.0)
 
+    def test_many_chunks_covering_one_truth_do_not_push_ndcg_above_one(self) -> None:
+        """The bug the dedup fix exists for, hand-computed.
+
+        One labelled span, three retrieved chunks that ALL cover it (one clause routinely
+        spans several chunks). `relevance_vector` marks all three relevant, so the old calc
+        summed the gain three times:
+
+            rel (old)   = [1, 1, 1]
+            DCG         = 1/log2(2) + 1/log2(3) + 1/log2(4)
+                        = 1.0 + 0.6309297535714574 + 0.5
+                        = 2.1309297535714574
+            IDCG (1 truth) = 1/log2(2) = 1.0
+            nDCG (old)  = 2.1309...   -> ABOVE 1, which is impossible for nDCG.
+
+        Credited once, at the first-covering chunk:
+
+            rel (fixed) = [1, 0, 0]
+            DCG         = 1/log2(2) = 1.0
+            nDCG        = 1.0        -> the span was found at rank 1; a perfect result.
+        """
+        truths = (truth("d1", "4.2"),)
+        chunks = [chunk("d1", "4.2"), chunk("d1", "4.2"), chunk("d1", "4.2")]
+        assert ndcg_at_k(chunks, truths, 10, M) == pytest.approx(1.0)
+
+    def test_distinct_truths_each_found_once_is_unchanged_by_the_dedup(self) -> None:
+        """The dedup must not move the cases the original hand-computed test covered."""
+        chunks = [
+            chunk("d1", "9.9"),
+            chunk("d1", "4.2"),
+            chunk("d1", "8.8"),
+            chunk("d1", "2.1"),
+            chunk("d1", "7.7"),
+        ]
+        truths = (truth("d1", "4.2"), truth("d1", "2.1"))
+        expected = (1 / log2(3) + 1 / log2(5)) / (1 / log2(2) + 1 / log2(3))
+        assert ndcg_at_k(chunks, truths, 5, M) == pytest.approx(expected)
+
     def test_reranking_moves_the_number(self) -> None:
         """The whole justification for a 60ms reranker is that it moves this metric."""
         truths = (truth("d1", "4.2"),)
