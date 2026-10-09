@@ -860,11 +860,17 @@ template, `data/prompt_tokens.json`):
   table chunks) are the six *smallest* prompts (597-1,049 tok), because row-NL serialises each
   cell to a short sentence. This reinforces the T3 token-cost argument for row-NL.
 
-So the two slow runs are **machine-load artefacts, not a corpus property** - the standing "CPU
-timing is load-dependent, indicative, not a measurement" caveat (§9), now with a number behind
-it. **Consequence for the day-7 cost sweep:** price by tokens, which are bounded and stable
-(~1.4k median, ~2.4k worst case at top_k=5); do not price by these wall-clock numbers, and any
-latency claim needs an isolated run.
+So what the slow runs are NOT is prompt-size driven - that is measured and ruled out (r=0.22,
+and the largest prompts were fast). What they ARE is **unexplained.** A third case appeared in
+the node-5(b) run (below) - h-31's generation at 5,955s, again a small, table-light prompt - so
+there are now three (h-04, h-35, h-31) with no prompt-size explanation. The tempting account is
+machine load, but this project has **no instrumentation of CPU contention during these runs**,
+so load is a hypothesis, not a finding, and it is not asserted as the cause. The honest statement
+is the standing §9 caveat with a number behind half of it: prompt size is excluded; the residual
+is uninstrumented. **Consequence for the day-7 cost sweep:** price by tokens, which are bounded
+and stable (~1.4k median, ~2.4k worst case at top_k=5); do not price by these wall-clock numbers,
+and any latency claim needs an isolated, instrumented run - which would also be what finally
+explains the outliers.
 
 #### The graph itself — nodes, state, and where each is justified (PROPOSAL, 2026-10-09)
 
@@ -912,11 +918,49 @@ because n=30 with 5 positives makes κ unstable and 0.60 is not a threshold this
 **The baseline to beat is self-report's: 2/5 abstains caught, and 0 wrong declines among the 23
 answerables retrieval actually supported** (2/25 overall - the two it declined, h-03 and h-33,
 are recall-0 items where declining is the honest call). κ may be reported as a secondary number,
-but it does not gate. **The validation needs no new generation:** it runs the judge over the
-answers already in `data/selfreport.json`, so it executes the moment the judge exists. Until it
-clears that bar the judge's verdict is advisory and logged, not gating - and the hard
-unanswerables (h-38/39/40) keep failing honestly; the graph has the catcher, but an unvalidated
-catcher is not allowed to act.
+but it does not gate. ~~The validation needs no new generation: it runs the judge over the
+answers already in `data/selfreport.json`.~~ **Correction (2026-10-09):** `selfreport.json`
+stored only the self-report *flags*, not the answers they were about, so the judge could not be
+scored against them - the answers had to be reconstructed by re-generating (temp-0 is
+deterministic; a gate confirmed the reconstruction matched the two surviving answers
+byte-for-byte). This is SILENT_WRONGNESS practice #17: a measurement must persist the artefact
+it judged, not only its verdict.
+
+**Result (2026-10-09, `data/judge_validate.json`, 30 items): the judge FAILS the bar and is
+strictly worse than self-report. 5(b) stays advisory.**
+
+| | self-report | grounded-and-answers judge |
+|---|---|---|
+| abstains caught | 2/5 | **2/5** (h-23, h-24 via the generator's own decline; h-38, h-39, h-40 all MISSED) |
+| answerables wrongly declined | 2/25 | **9/25** (7 judge-driven, 2 generator-declines) |
+
+The pre-registered rule was: gate only if the judge **strictly beats** self-report on *both*
+numbers. It beats neither - same 2/5 caught, and 4.5x the wrong declines. Its net effect over
+self-report is **+7 wrong declines and zero additional abstains caught**. The strict all()-
+support variant is no rescue: 3/5 caught at the cost of 13/25 declined - the "catches more,
+declines far more" trade-off the rule rejects by construction.
+
+The sharp diagnostic is *where* the judge errs: of its 9 wrong declines, **6 are on
+retrieval-supported items (five at recall 1.0)** - h-01, h-09, h-10, h-21 had the labelled
+span retrieved and a correct answer, and the judge called it unsupported. Self-report wrongly
+declined 0/23 retrieval-supported items; the judge wrongly declines 6/13. It fails in both
+directions at once: too strict on genuine answers, too lenient on the unanswerables it was built
+to catch (h-38/39/40 cleared because their cited passages ARE about the topic). That is the same
+aboutness confusion that killed the sufficiency gate - a 1.5B judge cannot separate "supports the
+claim" from "is about the subject" any better than the bi-encoder could.
+
+**Scope, stated honestly:** this is the 1.5B *local* model as judge - a weak instrument, chosen
+to match the self-report baseline (also 1.5B) so the comparison isolates self-grading vs
+independent grading at fixed model size. The result is "an independent judge *on this instrument*
+does not beat self-report," not "independent judging cannot work." A stronger judge (the hosted
+model, or DESIGN §5.8's local 30B) is **untested**, and this validation must be re-run against it
+- against the same `data/selfreport.json` answers - before 5(b) may gate.
+
+So abstention detection now has **three negative results** - the pre-generation sufficiency gate
+(geometry), model self-report (confidence), and the independent 1.5B judge (grounding) - each
+measured and each failing to separate the populations on this corpus. The graph keeps 5(b) as an
+advisory, logged node; it does not gate an abstention until a stronger judge clears the bar, and
+the hard unanswerables keep failing honestly until then.
 
 **`pre_gate` is a two-way rule, not three — measured (`data/superseded_branch.txt`, 2026-10-09).**
 The three-way rule (proceed / `ONLY_SUPERSEDED_EVIDENCE` / `NO_CANDIDATES`) was checked against

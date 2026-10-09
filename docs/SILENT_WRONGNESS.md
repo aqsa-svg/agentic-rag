@@ -999,6 +999,23 @@ them, and that are now structural rather than remembered:
     quoted verbatim before it is labelled, and where a summary and a quotation disagree, the
     summary is wrong by default. Paraphrase is where the obligation gets added.
 
+17. **A measurement persists the artefact it judged, not only its verdict.** The self-report
+    run (2026-10-09, DESIGN §5.7) scored the generator's `can_answer`/`confidence` across 30
+    items and stored, per item, only the derived verdict fields — not the answer text and
+    citations the verdict was *about*. The full records were to be written at the end; the run
+    was killed slow partway (the pathological-item problem), and the per-item stdout that
+    survived carried the flags only. So when a second mechanism — node 5(b), the independent
+    judge — had to be scored **against the same answers**, those answers no longer existed:
+    28 of 30 were unrecoverable, and the only two that survived did so because an *incremental*
+    writer (added, one run too late, after the first run was killed) had persisted them. The
+    measurement could not be re-examined, and a different instrument could not be run against
+    its subject, without re-paying generation — which on CPU is the hours the kill was trying
+    to escape. It recovered only because generation here is temp-0 deterministic (a gate
+    confirmed the reconstructed answers matched byte-for-byte), which is luck, not design:
+    a stochastic generator would have made the scored set gone for good. The rule: a run that
+    produces a judgement writes the evidence beside the judgement, and writes both
+    incrementally, so the measurement can be audited and re-judged without being re-run.
+
 
 The through-line: **prefer a loud failure to a plausible output, at every layer.** Ingest
 raises rather than emit a header-less table chunk. Validation refuses rather than accept a
