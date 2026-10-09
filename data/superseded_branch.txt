@@ -1,0 +1,61 @@
+
+CORPUS: 497 chunks in star-comprehensive-2021; 497 carry effective_to. filter is LIVE
+  sample effective_to: 2025-03-31
+
+h-14  as_of=2026-09-04
+    unfiltered top-5: 5  | superseded among them: 2  | 2021 chunks present: 2
+    after as_of filter: 5 remain  | 2021 chunks remaining: 0
+    -> pre_gate branch: proceed
+       [star-comprehensive-2021 p11 33] eff_to=2025-03-31 SUPERSEDED-removed
+       [irdai-master-circular-2024 p5 ] eff_to=None current
+       [irdai-annexure-2024 p2 ] eff_to=None current
+       [star-comprehensive-2021 p10 13] eff_to=2025-03-31 SUPERSEDED-removed
+       [irdai-annexure-2024 p2 ] eff_to=None current
+
+h-32  as_of=2026-09-04
+    unfiltered top-5: 5  | superseded among them: 1  | 2021 chunks present: 1
+    after as_of filter: 5 remain  | 2021 chunks remaining: 0
+    -> pre_gate branch: proceed
+       [irdai-annexure-2024 p2 ] eff_to=None current
+       [irdai-master-circular-2024 p17 1] eff_to=None current
+       [irdai-annexure-2024 p2 ] eff_to=None current
+       [nivabupa-reassure2 p15 12] eff_to=None current
+       [star-comprehensive-2021 p10 13] eff_to=2025-03-31 SUPERSEDED-removed
+
+h-33  as_of=2026-09-04
+    unfiltered top-5: 5  | superseded among them: 1  | 2021 chunks present: 1
+    after as_of filter: 5 remain  | 2021 chunks remaining: 0
+    -> pre_gate branch: proceed
+       [irdai-annexure-2024 p2 ] eff_to=None current
+       [irdai-master-circular-2024 p5 ] eff_to=None current
+       [irdai-annexure-2024 p2 ] eff_to=None current
+       [star-comprehensive-2021 p11 19] eff_to=2025-03-31 SUPERSEDED-removed
+       [star-comprehensive-2025 p34 19] eff_to=None current
+
+h-34  as_of=2026-09-04
+    unfiltered top-5: 5  | superseded among them: 4  | 2021 chunks present: 4
+    after as_of filter: 5 remain  | 2021 chunks remaining: 0
+    -> pre_gate branch: proceed
+       [star-comprehensive-2021 p10 13] eff_to=2025-03-31 SUPERSEDED-removed
+       [nivabupa-reassure2 p14 12] eff_to=None current
+       [star-comprehensive-2021 p10 ] eff_to=2025-03-31 SUPERSEDED-removed
+       [star-comprehensive-2021 p9 12] eff_to=2025-03-31 SUPERSEDED-removed
+       [star-comprehensive-2021 p2 9] eff_to=2025-03-31 SUPERSEDED-removed
+
+h-35  as_of=2026-09-04
+    unfiltered top-5: 5  | superseded among them: 2  | 2021 chunks present: 2
+    after as_of filter: 5 remain  | 2021 chunks remaining: 0
+    -> pre_gate branch: proceed
+       [star-comprehensive-2021 p9 12] eff_to=2025-03-31 SUPERSEDED-removed
+       [star-comprehensive-2025 p30 25] eff_to=None current
+       [nivabupa-reassure2 p15 12] eff_to=None current
+       [star-comprehensive-2021 p2 ] eff_to=2025-03-31 SUPERSEDED-removed
+       [star-comprehensive-2025 p32 2] eff_to=None current
+
+======================================================================
+BRANCH TALLY across 5 supersession items: {'proceed': 5, 'ONLY_SUPERSEDED_EVIDENCE': 0, 'NO_CANDIDATES': 0}
+ONLY_SUPERSEDED_EVIDENCE fires on ZERO items - the pre_gate branch is
+unreachable on this corpus; do not build it as a pre_gate branch.
+======================================================================
+
+[exited with code 0]

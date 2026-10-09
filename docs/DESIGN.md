@@ -866,6 +866,80 @@ it. **Consequence for the day-7 cost sweep:** price by tokens, which are bounded
 (~1.4k median, ~2.4k worst case at top_k=5); do not price by these wall-clock numbers, and any
 latency claim needs an isolated run.
 
+#### The graph itself — nodes, state, and where each is justified (PROPOSAL, 2026-10-09)
+
+Proposal, not built. The shape is a **linear pipeline with failure edges**, not a planner -
+which follows directly from "what the graph does NOT contain": no item needs conditional
+control flow, so the item-specific behaviours live *inside* nodes, not as branches.
+
+```
+retrieve → pre_gate → generate → parse ⟲repair → verify → finalize
+```
+
+**State** (`AgentState`): `question`, `as_of`; `candidates`, `filtered_superseded`,
+`degraded`; `attempt`, `raw_response`, `parsed`; `citations`, `grounded`, `responsive`,
+`surfaced_conflict`, `injection_suspected`; `answer`, `abstained`, `abstain_reason`,
+`confidence`, `usage`, `latency`, `trace_id`. Two fields earn their place from measurement:
+`filtered_superseded` (so a supersession abstention is distinguishable from a generic empty
+set) and `responsive` (the independent judge's verdict, kept **separate** from any model
+self-report, which §5.7's self-report measurement showed is unreliable).
+
+| node | role | justified by |
+|---|---|---|
+| **retrieve** | hybrid (dense+BM25 RRF), with the `as_of` supersession filter applied here as a retrieval-side metadata op, not a node | supersession items h-14/32/33/34/35; `needs_agent=False` |
+| **pre_gate** | **empty-candidate-set check only** → `NO_CANDIDATES` | the sufficiency sweep (`data/suff_signal.json`): no threshold separates, so the only pre-gen abstention is the degenerate one |
+| **generate** | prompt (numbered passages, cite-by-integer) + **injection envelope** + the "describe the conflict / don't pick a branch" rule, temp 0 | injection h-29/30/31/36/37; `surface_conflict` h-18; `conditional_override` h-04/h-28 |
+| **parse ⟲repair** | parse JSON; one repair on failure, then abstain `MALFORMED_GENERATION` | F5; `MAX_REPAIR_ATTEMPTS=1` is measured (temp-0 re-emits identical garbage); instance 10 |
+| **verify** | the grounded-and-answers judge: (a) membership — every cite ∈ candidates; (b) support+responsiveness via an **independent** judge | self-report measurement: the generator answered 3/5 unanswerables at confidence 1.0, so it cannot grade its own grounding |
+| **finalize** | assemble `AnswerResult` | — |
+
+**Retry** is bounded per `LLMErrorKind`: rate-limit/transport → capped retries then
+`GENERATION_UNAVAILABLE` (measured caveat: retries once rescued nothing, 6/7 still abstained);
+not-configured/forbidden/safety → never retry, distinct reasons; verify failure → no retry
+(temp-0 reproduces the same ungrounded answer), it becomes an abstention.
+
+**Node 5(b) — the judge is answer-support, and lexical is ruled out by the same data that
+killed the sufficiency gate.** A lexical overlap check scores a cruder *aboutness*, and the
+unanswerable decoys are built to share surface vocabulary with the question (Zone A-E, Section
+80-D, US-hospitalisation prose), so overlap would be highest on exactly the false answers -
+LIMITATIONS already records that it "would have passed h-23." Only a model scoring
+query+passage+answer jointly can score answer-vs-aboutness. Two cost controls: invoke only
+after membership grounding passes, one call at temp 0.
+
+**How 5(b) is validated, and the gate on it.** Not Cohen's κ. The judge is scored on the **same
+instrument as self-report** - abstains caught out of 5, answerables wrongly declined out of 25 -
+because n=30 with 5 positives makes κ unstable and 0.60 is not a threshold this project derived.
+**The baseline to beat is self-report's: 2/5 abstains caught, and 0 wrong declines among the 23
+answerables retrieval actually supported** (2/25 overall - the two it declined, h-03 and h-33,
+are recall-0 items where declining is the honest call). κ may be reported as a secondary number,
+but it does not gate. **The validation needs no new generation:** it runs the judge over the
+answers already in `data/selfreport.json`, so it executes the moment the judge exists. Until it
+clears that bar the judge's verdict is advisory and logged, not gating - and the hard
+unanswerables (h-38/39/40) keep failing honestly; the graph has the catcher, but an unvalidated
+catcher is not allowed to act.
+
+**`pre_gate` is a two-way rule, not three — measured (`data/superseded_branch.txt`, 2026-10-09).**
+The three-way rule (proceed / `ONLY_SUPERSEDED_EVIDENCE` / `NO_CANDIDATES`) was checked against
+the 5 supersession items, retrieval-only, with each item's `as_of` filter applied. The filter is
+live - all 497 `star-comprehensive-2021` chunks carry `effective_to=2025-03-31` - and it works
+as a defence: every stale 2021 chunk in the unfiltered top-5 (1 to 4 per item; h-34 had **4 of
+5** stale) is removed, 0 remain after filtering. **But all 5 items hit `proceed`, and
+`ONLY_SUPERSEDED_EVIDENCE` fires on zero of them**, because the top-5 always refills with current
+chunks from the ~2,000 in-force corpus - the filtered result is never empty. So the pre_gate is:
+
+```
+candidates empty → NO_CANDIDATES      (filtered_superseded is recorded but does not change this)
+else             → proceed
+```
+
+`ONLY_SUPERSEDED_EVIDENCE` stays in the enum as documented intent, but **no pre_gate branch is
+built for it**, because nothing on this corpus reaches it. The supersession defence is entirely
+upstream (the filter strips stale chunks before the generator sees them); the generator cannot
+ground an answer in a chunk it was never shown, so the stale-citation failure is prevented at
+retrieval, not caught at a gate. If a future corpus could filter a query down to an empty set,
+the branch becomes reachable and is one line to add - recorded so its current absence is a
+decision, not an omission.
+
 ### 5.8 Generation and judge models
 
 | Role | Choice | Trade-off accepted |
