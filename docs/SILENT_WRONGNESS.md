@@ -394,7 +394,7 @@ Measured across the whole corpus before the fix:
 | | |
 |---|---|
 | `excl.NN` ids in `clause_index.json` | 83 |
-| indexed chunks carrying **any** `excl.NN` id | **0 of 1,024** |
+| indexed chunks carrying **any** `excl.NN` id | **0 of 1,024** (markdown serialisation) |
 | golden items keyed on `excl.NN` | 3 of 7 (h-02, h-03, h-28) |
 
 ### Why it survived every existing check
@@ -875,6 +875,38 @@ and they stand. What was decorative was the *gate* - the automated promise that 
 numbers would block a regression. The harness worked; the turnstile in front of it was not
 plugged in. Saying only the first half ("nothing was gated") would be as inaccurate as the
 original overclaim, in the other direction.
+
+### Third instance (2026-10-09): "table-heavy prompts caused the slow runs" — asserted, then measured, then false
+
+The self-report run (DESIGN §5.7) had two items run pathologically slow on CPU: h-04 at
+4,754s and h-35 at 3,276s against a ~67s median. **The claim** that formed around them was
+that table-heavy retrieval produces a prompt large enough to dominate prefill, and that this
+is a property of the corpus (tables on 131 of 197 pages) rather than the machine.
+
+**What it was based on:** two data points and a plausible mechanism. Prefill cost does grow
+with prompt length; this corpus is table-dense; row-NL does expand tables into many sentences.
+Each premise is individually true, and the conclusion followed so naturally it was stated as
+established - repeated across turns, built into the diagnosis of a *third* item (h-38, which
+was killed mid-run on the strength of it), and about to be written up as a latency finding -
+**before a single prompt had been measured.**
+
+**What refuted it:** reconstructing every prompt's token count deterministically
+(`data/prompt_tokens.json`). The spread is **597-2,389 tokens, max 1.7x the 1,388 median** -
+nothing near the 8,192 cap, no giant prompt anywhere. The two slow items have ordinary,
+table-*light* prompts (h-04: 1,661 tok, 0/5 table chunks, a prose item; h-35: 1,537 tok).
+**Pearson r(tokens, wall) = 0.22.** The three largest prompts all ran in 67-135s. And row-NL
+makes table retrieval the *cheapest*, not the dearest: the six `table_formula` items (5/5
+table chunks) are the six smallest prompts. The mechanism ran exactly backwards from the claim.
+
+Why it belongs here and not with instance 4 (diagnostics that printed a false number): no code
+produced the wrong claim. It was an **inference from two points, narrated as a measured fact**
+and allowed to drive a decision (the h-38 kill) before the artefact that could check it - the
+token count - was ever produced. Same shape as C3: a statement offered in prose that the
+underlying document, once read, does not support. The guard is the same as everywhere else in
+this file: **a plausible mechanism over two data points is a hypothesis, not a finding, until
+the number that would falsify it has been computed.** The slow runs were machine-load noise -
+the standing "CPU timing is indicative, not a measurement" caveat - and the one lasting result
+is the opposite of the claim: row-NL's token cost on table content is low.
 
 ---
 

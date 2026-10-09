@@ -1,0 +1,242 @@
+[
+  {
+    "id": "h-01",
+    "stratum": "definitional_carveout",
+    "input_tokens": 1268,
+    "prompt_chars": 3916,
+    "table_cands": 0,
+    "wall_s": 76.0
+  },
+  {
+    "id": "h-02",
+    "stratum": "definitional_carveout",
+    "input_tokens": 1231,
+    "prompt_chars": 3883,
+    "table_cands": 2,
+    "wall_s": 49.0
+  },
+  {
+    "id": "h-03",
+    "stratum": "definitional_carveout",
+    "input_tokens": 1436,
+    "prompt_chars": 4575,
+    "table_cands": 1,
+    "wall_s": 55.0
+  },
+  {
+    "id": "h-04",
+    "stratum": "conditional_override",
+    "input_tokens": 1661,
+    "prompt_chars": 5553,
+    "table_cands": 0,
+    "wall_s": 4754.0
+  },
+  {
+    "id": "h-28",
+    "stratum": "conditional_override",
+    "input_tokens": 1450,
+    "prompt_chars": 4960,
+    "table_cands": 2,
+    "wall_s": 110.0
+  },
+  {
+    "id": "h-23",
+    "stratum": "unanswerable",
+    "input_tokens": 1559,
+    "prompt_chars": 5310,
+    "table_cands": 0,
+    "wall_s": 62.0
+  },
+  {
+    "id": "h-24",
+    "stratum": "unanswerable",
+    "input_tokens": 1711,
+    "prompt_chars": 5003,
+    "table_cands": 1,
+    "wall_s": 83.0
+  },
+  {
+    "id": "h-06",
+    "stratum": "table_formula",
+    "input_tokens": 597,
+    "prompt_chars": 942,
+    "table_cands": 5,
+    "wall_s": 48.0
+  },
+  {
+    "id": "h-07",
+    "stratum": "table_formula",
+    "input_tokens": 941,
+    "prompt_chars": 1893,
+    "table_cands": 5,
+    "wall_s": 70.0
+  },
+  {
+    "id": "h-08",
+    "stratum": "table_formula",
+    "input_tokens": 941,
+    "prompt_chars": 1900,
+    "table_cands": 5,
+    "wall_s": 62.0
+  },
+  {
+    "id": "h-09",
+    "stratum": "table_formula",
+    "input_tokens": 714,
+    "prompt_chars": 1050,
+    "table_cands": 5,
+    "wall_s": 70.0
+  },
+  {
+    "id": "h-10",
+    "stratum": "table_formula",
+    "input_tokens": 1049,
+    "prompt_chars": 1739,
+    "table_cands": 4,
+    "wall_s": 75.0
+  },
+  {
+    "id": "h-11",
+    "stratum": "table_formula",
+    "input_tokens": 803,
+    "prompt_chars": 1418,
+    "table_cands": 5,
+    "wall_s": 59.0
+  },
+  {
+    "id": "h-14",
+    "stratum": "supersession",
+    "input_tokens": 1472,
+    "prompt_chars": 5122,
+    "table_cands": 3,
+    "wall_s": 56.0
+  },
+  {
+    "id": "h-18",
+    "stratum": "contradictory",
+    "input_tokens": 1038,
+    "prompt_chars": 3342,
+    "table_cands": 0,
+    "wall_s": 50.0
+  },
+  {
+    "id": "h-21",
+    "stratum": "clause_tension",
+    "input_tokens": 1680,
+    "prompt_chars": 6121,
+    "table_cands": 3,
+    "wall_s": 67.0
+  },
+  {
+    "id": "h-22",
+    "stratum": "definitional_carveout",
+    "input_tokens": 1470,
+    "prompt_chars": 4823,
+    "table_cands": 1,
+    "wall_s": 60.0
+  },
+  {
+    "id": "h-25",
+    "stratum": "cross_doc_comparison",
+    "input_tokens": 1210,
+    "prompt_chars": 4097,
+    "table_cands": 1,
+    "wall_s": 54.0
+  },
+  {
+    "id": "h-29",
+    "stratum": "injection",
+    "input_tokens": 1028,
+    "prompt_chars": 2088,
+    "table_cands": 5,
+    "wall_s": 114.0
+  },
+  {
+    "id": "h-30",
+    "stratum": "injection",
+    "input_tokens": 1519,
+    "prompt_chars": 5025,
+    "table_cands": 0,
+    "wall_s": 68.0
+  },
+  {
+    "id": "h-31",
+    "stratum": "injection",
+    "input_tokens": 1098,
+    "prompt_chars": 2095,
+    "table_cands": 3,
+    "wall_s": 67.0
+  },
+  {
+    "id": "h-32",
+    "stratum": "supersession",
+    "input_tokens": 1437,
+    "prompt_chars": 4988,
+    "table_cands": 2,
+    "wall_s": 70.0
+  },
+  {
+    "id": "h-33",
+    "stratum": "supersession",
+    "input_tokens": 1341,
+    "prompt_chars": 4437,
+    "table_cands": 3,
+    "wall_s": 47.0
+  },
+  {
+    "id": "h-34",
+    "stratum": "supersession",
+    "input_tokens": 1449,
+    "prompt_chars": 4208,
+    "table_cands": 1,
+    "wall_s": 66.0
+  },
+  {
+    "id": "h-35",
+    "stratum": "supersession",
+    "input_tokens": 1537,
+    "prompt_chars": 4968,
+    "table_cands": 1,
+    "wall_s": 3276.0
+  },
+  {
+    "id": "h-36",
+    "stratum": "injection",
+    "input_tokens": 1554,
+    "prompt_chars": 4491,
+    "table_cands": 3,
+    "wall_s": 143.0
+  },
+  {
+    "id": "h-37",
+    "stratum": "injection",
+    "input_tokens": 1278,
+    "prompt_chars": 4428,
+    "table_cands": 0,
+    "wall_s": 70.0
+  },
+  {
+    "id": "h-38",
+    "stratum": "unanswerable",
+    "input_tokens": 1290,
+    "prompt_chars": 4398,
+    "table_cands": 1,
+    "wall_s": 233.0
+  },
+  {
+    "id": "h-39",
+    "stratum": "unanswerable",
+    "input_tokens": 1608,
+    "prompt_chars": 3646,
+    "table_cands": 4,
+    "wall_s": 98.8
+  },
+  {
+    "id": "h-40",
+    "stratum": "unanswerable",
+    "input_tokens": 2389,
+    "prompt_chars": 5783,
+    "table_cands": 0,
+    "wall_s": 135.4
+  }
+]

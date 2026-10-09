@@ -801,6 +801,71 @@ only as an abstention gate would pay 4 seconds for a gate the post-generation ch
 the cost of the generation already being made. The threshold that was going to be calibrated
 on day 7 does not exist to calibrate; the day-7 sweep is now the cost-ratio one alone.
 
+**The corollary is the part worth keeping.** The absence of a usable operating point is not a
+disappointment to be engineered around - it is *evidence the unanswerable items are good*. A
+decoy that a bi-encoder could separate from a real answer on topicality alone would be a weak
+decoy: a question whose near-miss chunks are visibly off-topic is one the retriever was never
+going to be fooled by, and an abstention item that easy does not probe anything. The five
+`unanswerable` items here were written so their near-misses are *about the same subject* as the
+question (Zone A-E geography for a premium-by-city question, Section 80-D tax for a
+deductibility question) - which is exactly why the geometry cannot rank them below the
+answerables, and exactly what makes them worth labelling. **A weaker decoy set would have
+produced a clean threshold and a gate that passed this measurement and then failed in
+production**, on the first real question whose decoys happened to be on-topic. The gate that
+cannot be calibrated here is the gate that would have been a false defence in the field.
+
+#### The post-generation signal was ALSO measured before building: model self-report fails too (2026-10-09)
+
+The design moved abstention post-generation (above). That left a choice: trust the model's own
+self-report - add `can_answer` (bool) and `confidence` (0.0-1.0) to the response schema and
+believe it - or pay for a separate grounded-and-answers judge. Same discipline as the
+sufficiency gate: **measure the cheap option against the labelled set before building on it.**
+Generate was run once across all 30 items with the self-report fields in the schema
+(local Qwen2.5-1.5B, row-NL dense, top_k=5, temp 0 - an instrument, not the production model;
+a *positive* result would transfer up, a negative one is read with that caveat).
+
+| question | result |
+|---|---|
+| (a) of the 5 abstain items, how many self-report abstention | **2 of 5** (h-23, h-24). h-38, h-39, h-40 self-report `can_answer=true` at **confidence 1.0** |
+| (b) of the 25 answerable, how many wrongly self-report abstention | **2 of 25** (h-03, h-33) - and both are recall-0 items, so the flag is tracking *retrieval success*, not answerability |
+| (c) does a confidence threshold separate better than the binary flag | **No.** 28 of 30 values are 0.0 or 1.0; the Pareto sweep ties the binary flag at t≤0.85 and is strictly worse above it |
+
+The decisive failure is in (a): the three missed abstentions are answered with **maximal
+confidence** - h-40 replies "Yes" to overseas hospitalisation, the exact confident-false-answer
+from `LIMITATIONS.md`. The model is most certain on three of the questions it should refuse,
+so no threshold on its own confidence can catch them without also rejecting the genuine answers
+that share the 1.0 ceiling. Confidence is a float wearing a binary flag's results: the two
+intermediate values that exist (h-02 0.85, h-04 0.95) do land on weak-retrieval items, a
+flicker of signal, but nine other recall-0 answerables scored a flat 1.0, so it is drowned.
+
+**Design consequence:** self-report is free but insufficient, and the **separate
+grounded-and-answers judge (DESIGN §5.8) is justified by data, not by caution.** The verify
+node does not ask the generator how sure it is; it checks grounding and responsiveness
+against the retrieved spans independently. Measured in `data/selfreport.json`.
+
+#### Prompt-size latency: the table hypothesis was measured and refuted (2026-10-09)
+
+Two self-report items ran pathologically slow on CPU - h-04 at 4,754s and h-35 at 3,276s
+against a ~67s median. The natural hypothesis, given tables sit on 131 of 197 pages, was that
+table-heavy retrieval produces a prompt large enough to dominate prefill. **Measured, and
+false.** Every prompt was reconstructed deterministically (top_k=5 row-NL + the Qwen chat
+template, `data/prompt_tokens.json`):
+
+- **Prompt tokens barely vary:** median **1,388**, range **597-2,389**, max only **1.7x**
+  median. Nothing is near the 8,192 context cap. There is no giant prompt.
+- **The slow runs have ordinary prompts:** h-04 = 1,661 tok (1.2x median, **0/5 table chunks**,
+  a prose item); h-35 = 1,537 tok (1.1x). The three *largest* prompts (h-40, h-24, h-21) all
+  ran in 67-135s. **Pearson r(tokens, wall) = 0.22** - prompt size does not explain wall time.
+- **Row-NL makes table retrieval CHEAPER, not dearer:** the six `table_formula` items (5/5
+  table chunks) are the six *smallest* prompts (597-1,049 tok), because row-NL serialises each
+  cell to a short sentence. This reinforces the T3 token-cost argument for row-NL.
+
+So the two slow runs are **machine-load artefacts, not a corpus property** - the standing "CPU
+timing is load-dependent, indicative, not a measurement" caveat (§9), now with a number behind
+it. **Consequence for the day-7 cost sweep:** price by tokens, which are bounded and stable
+(~1.4k median, ~2.4k worst case at top_k=5); do not price by these wall-clock numbers, and any
+latency claim needs an isolated run.
+
 ### 5.8 Generation and judge models
 
 | Role | Choice | Trade-off accepted |
@@ -1282,7 +1347,7 @@ running.
 |---|---|---|
 | model load (`bge-base-en-v1.5`, first use) | **132s** | includes a HuggingFace metadata request; warm process reuses it |
 | embedding, per chunk | **658 ms** | policy-wording chunk, batch of 32, CPU |
-| embedding, full corpus (1,024 chunks) | **1,184s (19.7 min)** | 1,157 ms/chunk under load; an isolated batch measured 658 ms/chunk, so contention nearly doubles it |
+| embedding, full corpus (1,024 markdown chunks) | **1,184s (19.7 min)** | 1,157 ms/chunk under load; an isolated batch measured 658 ms/chunk, so contention nearly doubles it |
 | corpus build (PDF parse + chunk, markdown) | 73–119s | varies with machine load; see `docs/BASELINE_V1.md` |
 | cache hit (re-measure, unchanged chunking) | **~0s embedding** | only changed chunks are re-embedded |
 

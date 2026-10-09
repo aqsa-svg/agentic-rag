@@ -71,7 +71,7 @@ The filter chain was **complete and correct end to end** and did nothing:
 - `in_force()` implements the date logic correctly
 
 **Nothing ever wrote the metadata it reads.** Both `ChunkMeta` construction sites set only
-`is_table`, `section_path` and `clause_ids`. Measured across 1,024 chunks: `insurer`,
+`is_table`, `section_path` and `clause_ids`. Measured across 1,024 markdown-serialised chunks: `insurer`,
 `product`, `effective_from`, `effective_to`, `superseded_by` — all empty, always. `Source`
 did not even have an `effective_to` field, so the manifest could not express the date the
 filter depends on.

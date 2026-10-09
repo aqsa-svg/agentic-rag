@@ -8,8 +8,8 @@ baseline, so the wrong numbers stay visible next to the reason they were wrong.
 ## Why a re-freeze happened
 
 Silent-wrongness instance 9. The chunker recorded a clause's heading number (`3`) while the
-golden set used the IRDAI code (`excl.03`), so **0 of 1,024 chunks carried any `excl.NN`
-id** and three of the seven labelled items could not match a chunk at all, however well
+golden set used the IRDAI code (`excl.03`), so **0 of 1,024 markdown-serialised chunks carried
+any `excl.NN` id** and three of the seven labelled items could not match a chunk at all, however well
 retrieval performed. The v1 baseline was measured through that matcher.
 
 Nothing about retrieval changed between the two runs. Same corpus, same BM25 parameters

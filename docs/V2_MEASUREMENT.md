@@ -5,7 +5,7 @@
 > Everything below was first published from a run in which **three of seven golden items
 > could not score at all**. The chunker recorded a clause's heading number (`3`) while the
 > labels used the IRDAI code (`excl.03`), so `SpanMatcher` could not match them: 0 of 1,024
-> chunks carried any `excl.NN` id. Silent-wrongness instance 9.
+> markdown-serialised chunks carried any `excl.NN` id. Silent-wrongness instance 9.
 >
 > The corrected numbers are below. The superseded ones are struck through **in place** rather
 > than deleted, with what was wrong and why, because a corrected record that shows the
