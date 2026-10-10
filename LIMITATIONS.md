@@ -81,18 +81,27 @@ The system answered **"Yes."** With a citation. No abstention.
 That is the failure this project was built to prevent, reaching the output unimpeded, with
 the verification layer reporting success.
 
-### What would close it, and why neither is done
+### What would close it — now built, measured, and still open on the instrument
 
-* **The LLM judge** (DESIGN §5.8) scores answer-support directly. Not built, and its
-  Cohen's κ is unmeasured — until κ clears the 0.60 floor its verdicts are not evidence,
-  so building it does not by itself close this.
-* **A lexical support check** — does the cited passage share the answer's key terms? Cheap
-  and deterministic, but it would have passed h-23 too: the Zone passages do contain
-  geography words. A weak check here is worse than none, because it would make the word
-  "verified" mean even less.
+* **The grounded-and-answers judge** (node 5(b), DESIGN §5.7) was **built and measured** — this
+  is the update to the original "not built." It scores, independently of the generator, whether
+  each cited passage supports the claim and whether the answer is responsive. Scored over the 30
+  labelled answers on the 1.5B instrument (`data/judge_validate.json`): it catches **2/5**
+  unanswerables and **wrongly declines 9/25** answers — **strictly worse than the model's own
+  self-report** (2/5 caught, 2/25 declined), with the same aboutness confusion. Per the
+  pre-registered rule it does **not** gate: node 5(b) is wired but **advisory, logged, never
+  driving an abstention**. So the gap is not closed, and the reason is measured, not assumed. κ
+  was deliberately *not* used as the bar — n=30 with 5 positives makes it unstable; the
+  self-report instrument (abstains caught / answerables wrongly declined) is the comparison.
+* **A lexical support check** — ruled out by the same data: overlap is highest on exactly the
+  on-topic decoys (the Zone passages contain geography words), so it would have passed h-23 too.
+  A weak check here is worse than none.
 
-Recorded unfixed. The honest claim is that the system **checks its citations are real, not
-that they are relevant.**
+Recorded unfixed. The honest claim is that the system **checks its citations are real, not that
+they are relevant** — and that an independent relevance judge, on the available instrument, does
+not beat the generator grading itself. A stronger judge is the one untested lever. The three
+abstention-detection negatives (geometry, self-report, this judge) are written up in the README
+rather than buried here, because they are the strongest material in the project.
 
 ### Caveats on the numbers above
 
@@ -100,8 +109,11 @@ A 1.5B model is not the production generator and these are not quality figures �
 `arag/local/__init__.py`. But the defect is in the engine, not the model: a stronger model
 would cite more relevantly on average and the check would still not be testing relevance.
 
-Two abstention paths were also untested by that run: `abstain_threshold` is 0.0 so the
-low-confidence route never fired, and no provider failure occurred.
+The full pipeline run over 30 items (`docs/AGENT_EVAL.md`) makes the consequence concrete: on
+the instrument the system **answers 26/30 and correctly refuses only 2 of 5 unanswerables** —
+it guesses more than it grounds or refuses. With the `abstain_threshold` sufficiency gate removed
+(DESIGN §5.7), the pre-generation abstain path is now the degenerate empty-set case alone; the
+semantic decision is the verify node's, and on this instrument it is advisory.
 
 ## RESOLVED — `contradictory` named two incompatible requirements
 

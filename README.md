@@ -1,36 +1,93 @@
-# agentic-rag — retrieval over Indian health insurance policy wordings
+# agentic-rag — retrieval-augmented QA over Indian health-insurance policy wordings
 
-A question-answering system over six real insurance documents: two versions of a Star
-Health policy wording, two Niva Bupa wordings, and two IRDAI regulatory documents. 197
-pages, 2,485 chunks (row-NL, the index T3 selected; 1,024 under the markdown serialisation it
-replaced), no synthetic corpus.
+A question-answering system over six real insurance documents — two versions of a Star Health
+wording, two Niva Bupa wordings, and the two IRDAI 2024 regulatory documents. 197 pages, 2,485
+row-NL chunks, no synthetic corpus.
 
-**The thing being demonstrated is not the pipeline. It is the evaluation.** The harness was
-built before the retriever, every number below came out of it, and every claim in this
-README links to the run that produced it.
+**The artifact is the evaluation, not the pipeline.** The harness was built before the
+retriever; every number here came out of it; every claim links to the run that produced it. And
+the most useful results are the negative ones — three different abstention signals were each
+measured against the labelled set and each failed, and four features were built or specified and
+then deliberately dropped on measurement.
+
+> **All generation and judge numbers below are from a local Qwen2.5-1.5B instrument on CPU.** It
+> was chosen to exercise the pipeline, not to be good: a 1.5B model's answers are not a hosted
+> model's. **Production-model results are unmeasured** — three attempts to measure them died on
+> API account state (a retired model, a 20/day quota, an un-prefixed env var, a suspended
+> project). Read every figure as "what the pipeline does on this instrument," never as a quality
+> claim about the system a good model would make.
+
+**Live instance:** IRDAI-only public deploy — _set your URL after `fly deploy` (see
+[The public instance](#the-public-instance--irdai-only))_. Scope is deliberately narrow and
+stated on the landing page.
 
 ---
 
-## Why this domain
+## What was measured, and what it showed
 
-A non-expert can verify ground truth from the document itself. That is rarer than it
-sounds, and it is the whole reason the golden set is checkable rather than plausible.
+### The headline: the full pipeline over 30 items, end to end
 
-It also punishes the failure mode that matters. "Is my surgery covered?" has a rupee
-answer, and a fluent wrong one is worse than a refusal — so the system is built to abstain
-rather than guess, and the eval is built to tell the difference.
+The real engine (retrieve → pre_gate → generate → parse → verify → finalise) run over all 30
+golden items on the 1.5B instrument, row-NL BM25-dense, `top_k=5` ([`docs/AGENT_EVAL.md`](docs/AGENT_EVAL.md),
+`data/eval_30.json`):
 
-## Measured results
+| | value |
+|---|---|
+| answered | **26 / 30** |
+| abstained | 4 |
+| unanswerables correctly refused | **2 / 5** |
+| answers grounded in the labelled span, when it was retrieved | **7 / 12 (58%)** |
 
-Every figure is from a recorded run. Nothing here is estimated.
+Stated plainly, including where it is bad: **the instrument guesses more than it grounds or
+refuses** — the opposite of the posture the project sets out ("abstain rather than guess"). The
+11 answers that missed their span split into **6 retrieval misses** (the span was never
+retrieved) and **5 true grounding failures** (span retrieved, wrong chunk cited). Best stratum:
+`table_formula`, 5/6 grounded — evidence for the corpus thesis that *the tables are the answers*
+and for the row-NL serialisation choice. Worst: the prose strata (`conditional_override` 0/2) and
+abstention.
+
+### Abstention detection failed three different ways — the strongest result here
+
+"Abstain rather than guess" needs a signal that separates the 5 unanswerable items from the 25
+answerable ones. **Three independent signals were measured against the labelled set; none
+separates them on this corpus.** Each was measured *before* the code that would depend on it was
+written.
+
+**1. Retrieval geometry (the sufficiency gate).** Dense top-1 cosine + the top1-top2 gap, below a
+threshold → abstain. Measured on all 30 (`data/suff_signal.json`): the should-abstain top-1 range
+`[0.614, 0.715]` sits **entirely inside** the should-answer range `[0.615, 0.867]`. An answerable
+item retrieved at recall 1.0 scores 0.615, below every item that should decline. **Cause, one
+sentence: a bi-encoder scores *aboutness*, and the decoys are about the topic** (Zone A-E is about
+geography; Section 80-D is about tax). The corollary is worth more than the gate: the *absence* of
+an operating point is evidence the unanswerable items are good — a decoy a bi-encoder could
+separate on topicality alone would be too easy to probe anything. Gate deleted before it was
+built.
+
+**2. The model's self-report.** Add `can_answer` + `confidence` to the schema and believe it.
+Measured over all 30 (`data/selfreport.json`): of the 5 unanswerables it catches **2**; the other
+3 it answers at **confidence 1.0** (one replies "Yes" to overseas hospitalisation the corpus does
+not cover). Confidence is near-binary — 28 of 30 values are 0.0 or 1.0 — and **no threshold on it
+beats the binary flag**. The model is most certain on exactly the questions it should refuse.
+
+**3. An independent grounded-and-answers judge.** A separate call scoring whether each cited
+passage supports the claim and whether the answer is responsive — justified by (2), since the
+generator cannot grade itself. Validated on the same 30 answers against the same instrument
+(`data/judge_validate.json`): it catches **2/5** abstains and **wrongly declines 9/25** answers —
+**strictly worse than self-report** (+7 wrong declines, 0 extra catches), 6 of those 9 on items
+whose span was retrieved and answered correctly. Same aboutness confusion as the sufficiency
+gate. Pre-registered rule: gate only if it strictly beats self-report on both numbers; it beats
+neither, so node 5(b) is wired but **advisory — logged, never gating** — and a stronger judge is
+the one untested lever that could change this.
+
+The honest consequence: on the available instrument, nothing reliably tells answerable from
+unanswerable, so the hard unanswerables are answered. That is a measured property of a weak judge
+on a good decoy set, not a bug to patch.
 
 ### Retrieval, `top_k=10` — the 7-item v1 baseline era
 
-These runs were measured on the **7-item v1 set**, before the golden set reached its 30-item
-target (below). A re-run on all 30 is owed and is v2 work. The **nDCG column was re-scored
-after the 2026-10-08 metric fix** — the old metric over-credited a span covered by more than
-one retrieved chunk (`docs/SILENT_WRONGNESS.md`, instance 4), so struck figures are the
-inflated originals and the bold ones are corrected from the stored per-span ranks:
+Measured on the 7-item v1 set, before the golden set reached 30 (a 30-item re-run is owed). The
+nDCG column was re-scored after the 2026-10-08 metric fix (struck = the over-crediting original,
+bold = corrected from stored per-span ranks):
 
 | | recall@10 | nDCG@10 | MRR | ctx precision | hit rate |
 |---|---|---|---|---|---|
@@ -40,132 +97,71 @@ inflated originals and the bold ones are corrected from the stored per-span rank
 | **v3** dense + supersession filter | **0.700** | ~~0.526~~ **0.383** | 0.375 | **0.160** | 0.800 |
 | **v4** + cross-encoder rerank | **0.700** | ~~0.595~~ **0.395** | **0.440** | **0.160** | 0.800 |
 
-BM25's 0.235 is unchanged — lexical retrieval returned no duplicate per-span chunks, so there
-was nothing to over-credit. The ordering is untouched by the fix: no conclusion moved, which
-is itself recorded (`docs/V2_MEASUREMENT.md`, `docs/V4_RERANK.md`).
+Three findings from these runs outlast the numbers: the **hybrid loses to dense** (RRF discards
+score magnitude, so BM25's confident wrong ranking weighs as much as dense's right one); a
+**pre-registered prediction failed** (h-03, *"I bought the policy five days ago and now I have a
+fever"* vs *"30-day waiting period — Code Excl 03"*, still scores 0.000 under dense — recorded,
+not dropped); and a **feature wired end to end was inert** — the `as_of` version filter was
+correct at every layer and did nothing because nothing wrote the metadata it read (fixed, then
+measured as a delta: dense recall 0.600 → 0.700, stale chunks in top-k 14 → 0).
 
 Full records: [`docs/BASELINE_V1R.md`](docs/BASELINE_V1R.md), [`docs/V2_MEASUREMENT.md`](docs/V2_MEASUREMENT.md),
 [`docs/V3_SUPERSESSION.md`](docs/V3_SUPERSESSION.md), [`docs/V4_RERANK.md`](docs/V4_RERANK.md).
-Raw: `data/baseline_v1r.json`, `data/v2_measure.json`, `data/v3_supersession.json`,
-`data/v4_rerank.json`.
 
-**v4's reranker is built, measured and deliberately NOT SHIPPED.** It is still the best ranking quality here — nDCG ~~0.595~~ **0.395** vs dense's ~~0.526~~ **0.383** (corrected 2026-10-08: the real gain is **+0.012**, not the +0.070 the over-credited metric implied), MRR 0.440 — and it costs **4,108 ms against DESIGN §5.5's 60 ms budget**: 68x over, more than the entire 2.5s flat-lookup p95 allowance in a single stage. The correction *reinforces* the decision — a smaller gain for the same cost — rather than changing it, because it rested on latency and never on the nDCG value. The online configuration remains **v3 — dense + supersession filter, 208 ms** — and the reranker is an offline quality ceiling until the ONNX-INT8 path closes the gap.
+## Four deliberate non-adoptions, each killed by a measurement
 
-The script that measured it printed `EARNS IT`, because it tested `nDCG > 0` rather than DESIGN's `nDCG > 0 within 60ms`. That is the **third** guard in this project found green while the thing it existed for walked past — see [`docs/SILENT_WRONGNESS.md`](docs/SILENT_WRONGNESS.md), "A THIRD pattern".
+The discipline the project is built to demonstrate: a thing is left out because a number says so,
+and the number is recorded so a later reader does not add it back as an oversight.
 
-**These remain development-signal numbers, not results** — but no longer because the set is
-unfinished. ~~Seven labelled items is far below the composition gate, `arag-eval validate`
-says `NOT YET PUBLISHABLE`.~~ The golden set reached its target on 2026-10-08 — **30 of 30,
-all human-authored, every stratum floor met, `arag-eval validate` reports no shortfall** — and
-these retrieval runs predate it on the 7-item set. They stay directional for a different
-reason: at the per-stratum sizes one item moves a stratum 20–50 points, so per-stratum figures
-are not quotable, and the 30-item retrieval re-run is still owed. See
-[Honest scope](#honest-scope).
+| Not adopted | The measurement that killed it |
+|---|---|
+| **Cross-encoder reranker** | Best ranking quality here — but **+0.012 nDCG for 68× the DESIGN §5.5 latency budget** (4,108 ms vs 60 ms). The gain is real; the latency is disqualifying. Online config stays dense + supersession filter at 208 ms. ([`docs/V4_RERANK.md`](docs/V4_RERANK.md)) |
+| **Pre-generation sufficiency gate** | Dense top-1 + gap do not separate the 5 unanswerables from the 25 answerables (above). No threshold worth setting, so the geometric abstain-entry shrank to the degenerate empty-set case. |
+| **LangGraph** | The control flow is **linear with failure edges**; no labelled item needs conditional routing (no ReAct loop, no multi-hop planner, no reflect node — none has an item to justify it). A procedural `GeneratingEngine` already did the whole flow, so the dependency + checkpointer + graph API bought nothing. Specified in DESIGN §5.7, then dropped; the import-boundary test flipped from "only `arag.agent` may import it" to "**nothing imports it**." |
+| **A datastore / checkpointer** | With LangGraph gone there is no graph state to checkpoint, and a database for a demo audit log buys nothing the structured stdout trace does not — every request mints a `trace_id` carried on the `structlog` JSON line. The deployed service is stateless; the rate limit is in-memory. |
 
-### Three findings worth more than the numbers
+## The golden set as a discovery method
 
-**The hybrid loses to dense alone on four of five metrics.** Mechanism, from h-28: dense
-finds a labelled span at rank 3 and fusion pushes it out of the top 10. RRF discards score
-magnitude by design, so BM25's confident *wrong* ranking is weighted exactly as heavily as
-dense's correct one. Left unswept at the documented default rather than tuned after seeing
-the numbers.
+30 human-authored items, every span checked against a wording, zero synthetic. It is hand-labelled
+on purpose — labels written by a model and marked `authored_by: human` would falsify the one claim
+the whole set rests on — and the labelling is where the sharpest findings came from:
 
-**A pre-registered prediction failed.** DESIGN §11 stated in advance that BM25 would fail
-vocabulary mismatch and that dense retrieval was "precisely the gap" that would close it.
-h-03 — *"I bought the policy five days ago and now I have a fever"* against *"30-day
-waiting period — Code Excl 03"* — still scores **0.000 under dense**. The chunk is
-reachable and simply is not retrieved. Recorded as a failed prediction, not quietly
-dropped.
+- **Two of the fifteen strata were found while labelling, not during design.** `conditional_override`
+  (stratum 14) surfaced from reading two clauses on adjacent pages — a figure real but gated on
+  something the policyholder lacks by default. `supersession` (stratum 15) surfaced when a labelled
+  span pointed at a clause code the index had *silently dropped*, which led to three deleted
+  exclusions, one of which was a polarity reversal, not a deletion. Neither was visible to any scan
+  written beforehand. That is hand-labelling as discovery, not data entry.
+- **The `contradictory` floor fell 5 → 3 → 2 → 1, and the floor is the finding.** IRDAI's 2024
+  standardisation mandates verbatim-identical wording for grace period, free look, moratorium,
+  cancellation, portability and claim settlement, which collapsed most cross-insurer
+  contradictions; the last candidate dropped when its text turned out to be a list heading on a
+  claim form, not an obligation clause. One genuine cross-insurer conflict survives. **A floor of 1
+  is a fact about the corpus, not a shortfall in effort** — stated unsoftened in LIMITATIONS,
+  because the number reads as a gap without it.
 
-**A feature can be wired end to end and still be inert.** The `as_of` version filter was
-complete and correct at every layer — runner, engine, both retrievers, the date logic — and
-did nothing, because **nothing ever wrote the metadata it reads**. Across all 1,024
-markdown-serialised chunks, `effective_to`, `superseded_by`, `insurer` and `product` were
-empty, always; `Source` did
-not even have an `effective_to` field. Retrieving h-01 with and without `as_of` returned the
-identical top 10.
+`arag-eval validate` reports no shortfall: 30/30, all human-authored, every stratum floor met. The
+total was cut 120 → 40 → 30 as the labelling rate was measured; raising it is a v2 item.
 
-Fixed, and measured as a delta rather than switched on and admired: **dense recall
-0.600 → 0.700, nDCG 0.420 → 0.526, stale chunks in the top-k 14 → 0**, no metric regressing
-on any engine. h-01's rank-1 result — the superseded 2021 definition of "Hospital", the
-highest-priority finding since the first baseline — is now the current one.
+## Silent wrongness, and the meta-finding
 
-This is the mirror of the audited pattern: *a signal consumed and never produced.*
-`tools/audit_signals.py` scored those fields healthy because it only tracks reads.
+[`docs/SILENT_WRONGNESS.md`](docs/SILENT_WRONGNESS.md) records every bug of one shape — **the code
+runs, nothing errors, the output looks right, and it is wrong** — across four patterns and
+seventeen now-structural practices. The costliest: a chunker that stored a clause's heading number
+while the golden set used the IRDAI code, so **0 of 1,024 chunks carried any `excl.NN` id** and the
+regression gate derived from those numbers could not catch the regression it existed for; and a
+model writing the **string** `"null"` where the prompt asked for JSON `null`, so a correct refusal
+was recorded as a confident answer — introduced by the layer meant to prevent exactly that.
 
-Two of the three supersession holes remain. The honest claim is narrow and true: **the
-retriever no longer returns the superseded wording. The eval still cannot prove it didn't**,
-because no label carries a `must_not_cite`.
-
-## What this project is actually about
-
-### Eleven silent-wrongness instances, found and recorded
-
-[`docs/SILENT_WRONGNESS.md`](docs/SILENT_WRONGNESS.md) — bugs sharing one shape:
-
-> **The code runs. Nothing errors. The output looks right. It is wrong.**
-
-The two that cost the most:
-
-**Instance 9** — the chunker recorded a clause's heading number (`3`) while the golden set
-used the IRDAI code (`excl.03`). **0 of 1,024 markdown-serialised chunks carried any `excl.NN`
-id**, so three of
-seven items could not score however well retrieval performed. Every metric published before
-the fix was measured through a matcher blind to them — and the regression gate derived from
-those numbers *could not catch the regression it existed for*: a change destroying one
-item's retrieval entirely would have scored 0.300 against a 0.30 floor and **passed**.
-
-**Instance 10** — the prompt says "set `answer` to null"; models write the **string**
-`"null"`. A four-character string is truthy, so a model's correct refusal was recorded as an
-answer. A false confident response, introduced by the layer whose only purpose is preventing
-them. Found by the first run against a real model, after 60 passing tests.
-
-### A second pattern: signals produced and never consumed
-
-`LLMError.retryable`, `LLMError.retry_after_s`, `LLMResponse.truncated` — all populated
-correctly, all covered by passing tests, all read by nothing. The third failed 5 of 7
-questions in the first live run by reprompting a truncation with the same token budget,
-which cannot succeed.
-
-[`tools/audit_signals.py`](tools/audit_signals.py) walks the AST for attribute *loads* and
-found **12 signals with no production consumer**, split by risk — `ONLY_SUPERSEDED_EVIDENCE`
-and `injection_suspected` read as implemented defences and are not. Ratcheted by
-`tests/test_signal_consumption.py`: a new unread signal fails the build, and so does one
-that becomes consumed without being removed from the list.
-
-### Guards that have been observed to fail
-
-Every architecture test added after instance 7 was **mutation-tested** — the defect
-reintroduced, the test confirmed to fail, the defect removed. A guard never observed failing
-is not known to be a guard.
-
-### A design assumption, measured against the labels and discarded before any agent code existed
-
-The abstention design put part of the decision on a **pre-generation sufficiency gate**: dense
-top-1 cosine plus the top1-top2 gap, below a calibrated threshold → abstain. Before writing
-it, the signal was measured against all 30 labelled items — the 5 `unanswerable` as the
-should-decline set, the 25 others as should-answer, because a threshold tuned only on items
-that should abstain over-abstains, and over-abstention is the failure that looks like safety.
-
-**It does not separate them.** The should-abstain top-1 range `[0.614, 0.715]` sits *entirely
-inside* the should-answer range `[0.615, 0.867]`; h-01 — answerable, retrieved at recall 1.0 —
-scores 0.615, below every one of the five items that should decline. The best trade-off point
-catches 3 of 5 unanswerables while wrongly declining 5 of 25 answers. The cause is one
-sentence: **a bi-encoder scores *aboutness*, and the decoys are about the topic** — Zone A-E
-is about geography, Section 80-D is about tax; they are on-subject and simply do not answer the
-question, so the geometry cannot rank them below a real answer.
-
-The corollary is the part worth keeping: **the absence of a usable operating point is evidence
-the unanswerable items are good.** A decoy a bi-encoder could separate on topicality alone
-would be a weak decoy — an abstention item that easy probes nothing. A weaker decoy set would
-have produced a clean threshold and a gate that passed this measurement and then **failed in
-production** on the first real question whose near-misses were on-topic.
-
-So the gate was **deleted before it was built**, not switched off after. Abstention moved
-post-generation (the verifier requires every claim grounded and the answer responsive); the
-pre-generation entry shrank to the degenerate case — empty candidate set → abstain. Knock-on:
-the day-7 threshold sweep no longer exists; **day 7 is the cost-ratio sweep alone.** Full
-numbers and the trade-off curve in [`docs/DESIGN.md`](docs/DESIGN.md) §5.7.
+**The meta-finding, stated plainly: across this work the instruments were wrong more often than
+the system they measured.** A probe that stringified a tuple and reported "0 missing"; an nDCG
+check that printed `EARNS IT` against `nDCG > 0` instead of DESIGN's `nDCG > 0 within 60 ms`; a
+production nDCG that over-credited multi-chunk spans and read >1; a measurement wrapper that let a
+syntax error exit 0; a self-report run that stored its verdicts but not the answers they judged, so
+a second instrument could not be run against them without re-paying generation. Each is recorded
+where it happened. The practices that caught them — assert every metric against a hand-computed
+value, trust no diagnostic until checked against the artefact it measures, a candidate in prose is
+a claim until both sides are read verbatim — are the actual product.
 
 ## Architecture
 
@@ -176,94 +172,87 @@ ingest → chunk → index ──┬── BM25 (lexical)      ──┐
 
 Three boundaries are enforced by AST-walking tests, not convention:
 
-- only `arag.agent` may import LangGraph — makes "framework choice is reversible" checkable
+- **nothing imports LangGraph** — it is non-adopted (§5.7), and the test is the trip-wire that keeps
+  re-adoption a decision rather than a drift
 - `arag.eval` may not import a concrete engine — what made harness-before-pipeline possible
-- the online request path may not reach offline-only dependencies (torch, PyMuPDF),
-  **over the full import closure**, not per file
+- the online request path may not reach offline-only dependencies (torch, PyMuPDF), **over the full
+  import closure**, not per file — added after instance 7, where the online path reached PyMuPDF
+  transitively while every per-file check passed
 
-That last one was added after instance 7, where `arag.retrieval.lexical` → two dataclasses →
-a package `__init__` → PyMuPDF reached the serverless path while every per-file check passed.
+**Generation is three stages and the middle one is adversarial.** Retrieve → generate → **verify**.
+The model cites passage *integers*, never chunk ids (a reproduced id can be plausibly wrong; an
+integer is in range or rejected), and any answer with an ungrounded citation is **discarded**, not
+annotated. Its documented limit: the check verifies a citation points at a *retrieved* passage, not
+that the passage *supports* the claim — which is the gap node 5(b) exists to close and, on the 1.5B
+instrument, does not (above).
 
-### Generation is three stages, and the middle one is adversarial
+## The public instance — IRDAI-only
 
-Retrieve → generate → **verify**. The model cites passage *integers*, never chunk ids: asked
-to reproduce `star-comprehensive-2025:p32:s146` a model will occasionally emit a plausible
-variant, which is a hallucinated citation that passes a regex and points at a real, wrong
-chunk. An integer is either in range or rejected. An answer with any ungrounded citation is
-**discarded**, not annotated.
+The deployed service answers over the **two public IRDAI 2024 documents only** (Master Circular +
+Annexure). **The four insurer policy wordings, the full six-source corpus, and every measured
+result stay local** — the wordings are copyrighted and the project never ships them, so a public
+instance that answered over them would publish them. The IRDAI documents are government regulatory
+instruments, freely redistributable, and are the only sources baked into the image; an allowlist
+`.dockerignore` keeps the wordings out of the build context. The landing page and the engine name
+(`agent-irdai`) state this scope so a live URL cannot be mistaken for the measured system.
 
-Its limit is documented rather than oversold: the check verifies a citation points at a
-*retrieved* passage, **not that the passage supports the claim**. See
-[`LIMITATIONS.md`](LIMITATIONS.md).
+Retrieval on the deployed path is BM25 (no embedder) over an IRDAI index built at startup;
+generation is the hosted Gemini API. With no `ARAG_GEMINI_API_KEY` the service abstains
+`generation_not_configured` honestly; with a key it answers. Endpoint discipline: `POST /ask`
+(question + optional `as_of`) returns the full `AnswerResult`; `GET /health`; **no endpoint returns
+raw chunks or full documents**; quotes are capped; a per-client rate limit applies.
+
+```bash
+# verified reachable locally under uvicorn; one authenticated command takes it public
+fly launch --no-deploy --copy-config          # edit app name in fly.toml
+fly secrets set ARAG_GEMINI_API_KEY=<key>     # without it, the service abstains, honestly
+fly deploy                                     # -> https://<app>.fly.dev   (or: Render Blueprint via render.yaml)
+
+curl -s -X POST "$URL/ask" -H 'content-type: application/json' \
+  -d '{"question":"What is the grace period for paying premium in instalments?"}'
+```
+
+See [DESIGN §10.1](docs/DESIGN.md) for the deployment record.
 
 ## Honest scope
 
-**Built and measured:** ingest, chunking, clause index, BM25, dense retrieval, RRF fusion,
-the eval harness, the regression gate, generation with citation verification.
+**Built and measured:** ingest, chunking, clause index, BM25, dense retrieval, RRF fusion, the eval
+harness, the regression gate, generation with citation verification, the full agent pipeline, the
+IRDAI-only deployable service.
 
-**Built, not measured against the production model:** generation. Three attempts died on
-account state — a retired model, a 20/day free quota, an un-prefixed environment variable,
-and a suspended Google project. Verified end to end against a local 1.5B model instead,
-which found two defects a scripted test could not. Those are pipeline-verification numbers,
-never quality numbers.
+**Measured on the 1.5B instrument only; production-model results unmeasured:** every generation,
+abstention and judge number. The local model found two defects a scripted test could not, but its
+quality figures are never the system's.
 
-**Not built:** LangGraph agent and its injection envelope, PII redaction, the cost sweep,
-chaos engineering, deployment. The injection stratum (5 items) and its adversarial fixture
-*are* built; the agent-side defence that would consume them is not.
+**Measured, then deliberately not built:** the four non-adoptions above.
 
-**Measured, then deliberately not built:** ~~abstain calibration~~ the pre-generation abstain
-threshold. The sufficiency signal did not separate the labelled populations, so the threshold
-was dropped before any agent code existed and abstention moved post-generation — see the
-subsection above. The day-7 sweep is now the cost-ratio one alone.
-
-**The golden set reached its target on 2026-10-08: ~~7 items of a 40 target~~ 30 of 30, all
-human-authored, every stratum floor met** (`arag-eval validate` reports no shortfall). The
-total was cut 120 → 40 → 30 as the labelling rate was measured — see `SetTargets`, which
-records what each cut costs — and raising it again is a v2 item, not a v1 one.
-
-The adversarial floors were themselves measured down to what the corpus actually contains,
-and the sharpest case is **contradictory, which fell 5 → 3 → 2 → 1.** IRDAI's 2024
-standardisation mandates verbatim-identical wording for grace period, free look, moratorium,
-cancellation, portability and claim settlement, which collapsed most cross-insurer
-contradictions (5 → 3 → 2 across a systematic survey, 2026-10-07); the final candidate then
-dropped when its text turned out to be a **list heading on a claim form, not an obligation
-clause** (2 → 1, 2026-10-08). The one
-survivor is h-18 (grace-period cover); the other grace-period item, h-25, is filed under
-`cross_doc_comparison` because its test is provenance, not conflict. **That the floor is 1 is a
-finding about the corpus, not a shortfall in labelling** — stated unsoftened in
-[`LIMITATIONS.md`](LIMITATIONS.md), because the number reads as a gap if it appears without it.
-
-Everything downstream is gated on the set, and it is hand-labelled by a human reading the PDFs,
-deliberately — labels written by a model and marked `authored_by: human` would falsify the
-claim the whole set rests on. Two of fifteen strata exist *because* hand-labelling found
-failure modes no scan had proposed.
+**Not built:** PII redaction, the cost-ratio sweep (day 7), chaos engineering, the ONNX online dense
+path, a stronger-judge re-validation. The injection stratum and its adversarial fixture are built;
+the agent-side injection envelope ships as *unmeasured hardening* (all five injection items already
+pass without it).
 
 ## Running it
 
 ```bash
 make install            # or: pip install -e ".[dev,offline]"
-arag-ingest fetch       # downloads the 4 insurer wordings (never committed — copyrighted); the
-                        # 2 public IRDAI regulatory PDFs ARE committed, for the public deploy (§10.1)
+arag-ingest fetch       # the 4 insurer wordings (never committed — copyrighted); the 2 public
+                        # IRDAI PDFs are committed, for the deploy (DESIGN §10.1)
 arag-ingest clause-index
 arag-eval validate      # schema + corpus resolution + composition
 arag-eval run --engine bm25
-make test               # 606 tests
+make test               # 660 tests
 ```
 
-Generation needs `ARAG_GEMINI_API_KEY` in `.env` — note the `ARAG_` prefix; the bare vendor
-name is read by nothing, and `arag.config.misprefixed_credentials()` exists because that
-mistake cost a full verification run.
+Generation needs `ARAG_GEMINI_API_KEY` (note the `ARAG_` prefix; the bare vendor name is read by
+nothing — `arag.config.misprefixed_credentials()` exists because that mistake cost a verification run).
 
 ## Documents
 
 | | |
 |---|---|
-| [`docs/DESIGN.md`](docs/DESIGN.md) | architecture, 15 strata, trade-offs with the rejected alternative named |
-| [`docs/SILENT_WRONGNESS.md`](docs/SILENT_WRONGNESS.md) | eleven instances, four patterns, sixteen practices |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | architecture, 15 strata, every trade-off with the rejected alternative named, the deployment record |
+| [`docs/AGENT_EVAL.md`](docs/AGENT_EVAL.md) | the headline 30-item pipeline run, by stratum |
+| [`docs/SILENT_WRONGNESS.md`](docs/SILENT_WRONGNESS.md) | the instances, four patterns, seventeen practices, the instruments-wrong meta-finding |
 | [`LIMITATIONS.md`](LIMITATIONS.md) | what does not work, measured |
-| [`docs/BASELINE_V1R.md`](docs/BASELINE_V1R.md) | the frozen baseline, and why it was re-frozen |
-| [`docs/V2_MEASUREMENT.md`](docs/V2_MEASUREMENT.md) | dense + hybrid, corrected in place with the original struck |
-| [`docs/V3_SUPERSESSION.md`](docs/V3_SUPERSESSION.md) | the version filter, and the delta it was deferred for |
-| [`docs/V4_RERANK.md`](docs/V4_RERANK.md) | the reranker: quality gain accepted, latency rejected |
+| [`docs/BASELINE_V1R.md`](docs/BASELINE_V1R.md) · [`docs/V2_MEASUREMENT.md`](docs/V2_MEASUREMENT.md) · [`docs/V3_SUPERSESSION.md`](docs/V3_SUPERSESSION.md) · [`docs/V4_RERANK.md`](docs/V4_RERANK.md) | the retrieval runs, corrected in place with originals struck |
 | [`docs/EVAL_EXPLAINED.md`](docs/EVAL_EXPLAINED.md) | the metrics from first principles, hand-worked |
-| [`docs/BUILD_RECORD.md`](docs/BUILD_RECORD.md) | which code was reviewed and which was not |
