@@ -180,6 +180,7 @@ def create_app() -> FastAPI:
             "padding:0 1rem;color:#111}"
             "code{background:#f4f4f5;padding:.1rem .3rem;border-radius:4px}"
             ".scope{background:#fff7ed;border:1px solid #fed7aa;padding:1rem;border-radius:8px}"
+            ".warn{background:#fef2f2;border:1px solid #fecaca;padding:1rem;border-radius:8px}"
         )
         return f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Agentic RAG — IRDAI regulation</title>
@@ -196,6 +197,14 @@ six-source corpus, and every measured result (retrieval, abstention, grounding) 
 not ship them. A live answer here demonstrates the pipeline over public regulation, not the
 measured system.</p>
 <p>Engine: <code>{engine.name}</code>. Generation {gen}.</p>
+<div class="warn"><strong>Measured limitation — read before trusting an answer.</strong> This runs
+a small instrument model and <strong>its abstention is unreliable</strong>: across three
+independent signals measured on the labelled set, none reliably told answerable from
+unanswerable, and on the 30-item eval the system correctly refused only <strong>2 of 5</strong>
+questions the documents do not address — it can answer, with apparent confidence, a question it
+should decline. Treat every answer as a <em>pipeline demonstration, not advice</em>, and verify
+it against the cited pages. The measurement behind this line is in the repo
+(<code>docs/AGENT_EVAL.md</code>), which is the point: the failure is documented, not hidden.</div>
 <h2>Ask</h2>
 <pre>curl -s -X POST "$URL/ask" -H 'content-type: application/json' \\
   -d '{{"question":"What is the grace period for paying premium in instalments?"}}'</pre>

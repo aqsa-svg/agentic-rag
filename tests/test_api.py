@@ -36,6 +36,14 @@ class TestLandingScope:
         assert "not served here" in html
         assert "copyrighted" in html
 
+    def test_landing_carries_the_measured_abstention_caveat(self, client: TestClient) -> None:
+        # a public URL must warn, next to the demo box, that abstention is unreliable - the
+        # measured failure (2/5 unanswerables refused) stated rather than hidden.
+        html = client.get("/").text
+        assert "abstention is unreliable" in html
+        assert "2 of 5" in html
+        assert "not advice" in html
+
 
 class TestAskContract:
     def test_abstain_is_a_200_with_a_typed_reason(self, client: TestClient) -> None:
