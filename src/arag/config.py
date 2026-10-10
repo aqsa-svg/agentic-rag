@@ -105,7 +105,8 @@ class Settings(BaseSettings):
     lexical_prefilter_k: int = 200
     rrf_k: int = 60
     rerank_top_n: int = 6
-    abstain_threshold: float = 0.35
+    # (abstain_threshold removed 2026-10-10: it was the retrieval-confidence sufficiency gate,
+    # measured and dropped in DESIGN §5.7, and it was read by nothing - an unread config signal.)
 
     # --- eval ---
     golden_path: Path = Field(default=REPO_ROOT / "data" / "golden" / "v1.jsonl")

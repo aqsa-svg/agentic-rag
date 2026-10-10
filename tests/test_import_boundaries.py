@@ -1,9 +1,10 @@
 """Architecture tests: the import direction is enforced, not merely documented.
 
-DESIGN §5.7 claims that "framework choice is reversible". A claim like that is worth
-nothing unless something breaks when it stops being true. These tests walk the AST of
-every module under ``src/arag`` and fail the build if a boundary is crossed, which turns
-the architecture section of the README from an aspiration into a property.
+DESIGN §5.7 records LangGraph as non-adopted and the other boundaries (offline deps off the
+online path, eval depends on protocols only) as enforced. A claim like that is worth nothing
+unless something breaks when it stops being true. These tests walk the AST of every module
+under ``src/arag`` and fail the build if a boundary is crossed, which turns the architecture
+section of the README from an aspiration into a property.
 
 These tests check **direct** imports, one file at a time. That is not sufficient on its
 own and was not: the online path reached PyMuPDF transitively for the whole life of the
@@ -23,9 +24,13 @@ import pytest
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "arag"
 
-# Packages that may import a heavy agent framework. Everything else must not.
+# Heavy agent frameworks. As of 2026-10-10 LangGraph is NON-ADOPTED (DESIGN §5.7): the agent
+# control flow is linear with failure edges, no labelled item requires conditional routing, and
+# the dependency bought nothing over the procedural GeneratingEngine - so the boundary is no
+# longer "only arag.agent may import it" but "nothing imports it at all." Kept here (not deleted)
+# so the day someone adds `import langgraph` the build fails and the non-adoption is a decision
+# re-made on purpose, not drifted past.
 AGENT_FRAMEWORK_ROOTS = {"langchain", "langgraph", "langchain_core", "langchain_community"}
-AGENT_PACKAGE = "agent"
 
 # Offline-only dependencies. These must never be reachable from the online request path,
 # because they would blow the Vercel bundle and pull torch into a CPU-only function.
@@ -60,21 +65,24 @@ def _package_of(path: Path) -> str:
 
 
 class TestAgentFrameworkContainment:
-    def test_only_the_agent_package_may_import_langgraph(self) -> None:
+    def test_langgraph_is_not_imported_anywhere(self) -> None:
+        """LangGraph is non-adopted (DESIGN §5.7). No module - including arag.agent - imports
+        it, so it is not even a dependency. If this fails, either the framework was adopted
+        (update DESIGN and this test deliberately) or it drifted back in by accident.
+        """
         violations: list[str] = []
         for module in _modules():
             package = _package_of(module)
-            if package == AGENT_PACKAGE:
-                continue
             for root, lineno in _imports(module):
                 if root in AGENT_FRAMEWORK_ROOTS:
                     violations.append(
                         f"{module.relative_to(SRC)}:{lineno} imports {root} "
-                        f"(package '{package or 'arag'}' is outside arag.agent)"
+                        f"(package '{package or 'arag'}')"
                     )
         assert not violations, (
-            "LangGraph/LangChain has leaked outside arag.agent, so the framework is no "
-            "longer replaceable and DESIGN §5.7 is no longer true:\n  " + "\n  ".join(violations)
+            "LangGraph/LangChain was adopted somewhere, but DESIGN §5.7 records it as "
+            "non-adopted (linear control flow, no conditional routing needed). Re-decide it "
+            "on purpose or remove the import:\n  " + "\n  ".join(violations)
         )
 
     def test_eval_never_imports_a_concrete_engine_or_retriever(self) -> None:
