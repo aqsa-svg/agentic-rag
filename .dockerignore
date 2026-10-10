@@ -1,0 +1,26 @@
+# Allowlist. The build context is uploaded to the builder, so this is a HARD boundary, not a
+# size optimisation: it must exclude the four copyrighted insurer wordings and every measured
+# result, shipping ONLY the two public IRDAI PDFs, their census, the IRDAI-only manifest, and
+# the source. Start by excluding everything, then re-include exactly what the image needs.
+*
+!pyproject.toml
+!README.md
+!src
+
+# data: exclude all, then re-include only the IRDAI public artifacts
+!data
+data/*
+!data/deploy
+data/deploy/*
+!data/deploy/irdai_sources.jsonl
+!data/deploy/probe_report.json
+!data/raw
+data/raw/*
+!data/raw/irdai-master-circular-2024.pdf
+!data/raw/irdai-annexure-2024.pdf
+
+# never, under any re-include
+**/__pycache__
+**/*.pyc
+.git
+.venv

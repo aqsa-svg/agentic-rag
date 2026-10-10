@@ -1,0 +1,18 @@
+# Render deploy config for the IRDAI-only public service (Render Blueprint).
+#   1. Push this repo to GitHub.
+#   2. Render Dashboard -> New -> Blueprint -> pick the repo (reads this file).
+#   3. Set ARAG_GEMINI_API_KEY in the service's Environment (without it the service abstains).
+# Render injects $PORT; the Dockerfile honours it.
+services:
+  - type: web
+    name: agentic-rag-irdai
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: ARAG_ENGINE
+        value: agent
+      - key: ARAG_GEMINI_API_KEY
+        sync: false   # set it in the dashboard; never commit the key

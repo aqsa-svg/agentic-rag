@@ -1,0 +1,21 @@
+# Fly.io deploy config for the IRDAI-only public service.
+#   fly launch --no-deploy --copy-config   # or: fly apps create <name> then edit `app` below
+#   fly secrets set ARAG_GEMINI_API_KEY=...  # without it the service abstains, honestly
+#   fly deploy
+# Rename `app` to something unique before the first deploy.
+app = "agentic-rag-irdai"
+primary_region = "sin"  # Singapore — closest Fly region to India
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

@@ -1513,7 +1513,7 @@ agentic_rag/
 │   ├── ingest/       # fetch, OCR, layout, tables, heading parse, chunkers, contextualiser
 │   ├── index/        # embedding, pgvector writer, bm25 builder, migrations
 │   ├── retrieval/    # dense, lexical, RRF fusion, rerank — behind Retriever protocol
-│   ├── agent/        # LangGraph graph, tools, state, checkpointer  (only LangChain importer)
+│   ├── agent/        # procedural GeneratingEngine, judge (5b), providers  (no LangGraph - §5.7)
 │   ├── guardrails/   # pii, injection detection, abstain calibration
 │   ├── local/        # local-model instruments (torch/transformers) - OFFLINE ONLY
 │   ├── eval/         # schema, metrics, judge, cassettes, gate, report   [v0 DONE]
@@ -1528,6 +1528,48 @@ agentic_rag/
 ├── Dockerfile
 └── Makefile
 ```
+
+### 10.1 Deployment — IRDAI-only public scope, no datastore (2026-10-10)
+
+The public instance serves answers over the **two public IRDAI 2024 documents only** — the
+Master Circular on Health Insurance Business and its Annexure. **The four insurer policy
+wordings, the full six-source corpus, and every measured result stay local.** The reason is the
+licensing line the whole project is built around: the wordings are copyrighted and never shipped
+(`.gitignore` excludes `data/raw/`). A public instance that answered over them would publish
+them. So the deploy carves off the public subset: the two IRDAI PDFs are government regulatory
+documents, freely redistributable, and are the only sources baked into the image. The landing
+page and the engine name (`agent-irdai`) state this scope so a live URL cannot be mistaken for
+the measured system. The 4 insurer PDFs are kept out of the build context by an allowlist
+`.dockerignore` — a hard boundary, since the context is uploaded to the builder.
+
+**No datastore, and that is a decision, not an omission** — a fourth non-adoption alongside the
+reranker, the sufficiency gate, the ReAct loop, and LangGraph. The instruction considered a
+Postgres checkpointer; with LangGraph dropped (§5.7) there is no graph state to checkpoint, and
+`MemorySaver` is a LangGraph construct that went with it. A database for a *demo audit log* buys
+nothing the structured stdout logs do not already give: every request mints a `trace_id` at the
+API boundary and the `structlog` JSON line carries it. So the service is stateless, the rate
+limit is in-memory, and the trace is the log. A durable store earns its place when there is
+shared state to keep (a real checkpointer, a persisted conversation), not before.
+
+**Engine and retrieval on the deployed path.** BM25 (pure Python, no embedder) over an IRDAI-only
+index built at startup from the baked PDFs — so the image needs `pymupdf` but **not** torch,
+sentence-transformers or onnxruntime. Generation is the hosted Gemini API: with no
+`ARAG_GEMINI_API_KEY` the service abstains `generation_not_configured` honestly; with a key it
+answers. (Dense retrieval is not on the deployed path: its embedder is torch-only and barred
+from the online bundle — a known gap, BM25-only is the rough-but-reachable choice.)
+
+**Endpoint discipline.** `POST /ask` (question + optional `as_of`) returns the full
+`AnswerResult`; `GET /health`; `GET /` is the scope landing page. **No endpoint returns raw
+chunks or full documents** — `/ask` gives citation *metadata* (document, page, clause) only, and
+any model-supplied quote is capped at `MAX_QUOTE_CHARS`. A per-client sliding-window rate limit
+is applied.
+
+**What this environment could not do.** The authenticated push to a host (Fly/Render/Railway)
+cannot run from the non-interactive build environment — no cloud CLI, no OAuth, and the Docker
+daemon was not running to even build the image locally. The service is verified reachable under
+`uvicorn` locally (real server, `curl`ed end to end), and the deploy is a single authenticated
+command the operator runs with their own credentials and a Gemini key (`fly deploy` /
+Render Blueprint; see `fly.toml`, `render.yaml`, `Dockerfile`).
 
 ### `arag.local` — added 2026-10-01, and why it is a package rather than a module
 

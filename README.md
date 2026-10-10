@@ -242,7 +242,8 @@ failure modes no scan had proposed.
 
 ```bash
 make install            # or: pip install -e ".[dev,offline]"
-arag-ingest fetch       # downloads the six source PDFs (never committed — copyrighted)
+arag-ingest fetch       # downloads the 4 insurer wordings (never committed — copyrighted); the
+                        # 2 public IRDAI regulatory PDFs ARE committed, for the public deploy (§10.1)
 arag-ingest clause-index
 arag-eval validate      # schema + corpus resolution + composition
 arag-eval run --engine bm25
