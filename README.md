@@ -1,3 +1,17 @@
+---
+title: Agentic RAG IRDAI
+emoji: 📄
+colorFrom: blue
+colorTo: gray
+sdk: gradio
+app_file: app.py
+pinned: false
+---
+
+<!-- The YAML above is the Hugging Face Space config (Gradio SDK, free CPU), and it also lets
+     this repo be pushed to a Space as-is; app.py is the entrypoint. GitHub renders it as a
+     small table. Everything below is the project write-up. -->
+
 # agentic-rag — retrieval-augmented QA over Indian health-insurance policy wordings
 
 A question-answering system over six real insurance documents — two versions of a Star Health

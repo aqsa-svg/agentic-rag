@@ -1564,12 +1564,22 @@ chunks or full documents** — `/ask` gives citation *metadata* (document, page,
 any model-supplied quote is capped at `MAX_QUOTE_CHARS`. A per-client sliding-window rate limit
 is applied.
 
-**What this environment could not do.** The authenticated push to a host (Fly/Render/Railway)
-cannot run from the non-interactive build environment — no cloud CLI, no OAuth, and the Docker
-daemon was not running to even build the image locally. The service is verified reachable under
-`uvicorn` locally (real server, `curl`ed end to end), and the deploy is a single authenticated
-command the operator runs with their own credentials and a Gemini key (`fly deploy` /
-Render Blueprint; see `fly.toml`, `render.yaml`, `Dockerfile`).
+**What this environment could not do.** The authenticated push to a host cannot run from the
+non-interactive build environment — no cloud CLI, no OAuth, and the Docker daemon was not running
+to build the image locally. The service is verified reachable under `uvicorn` locally (real
+server, `curl`ed end to end) and the Gradio UI under `python app.py` (serves, 7-component graph),
+and the deploy is a single authenticated step the operator runs with their own account + a Gemini
+key as a platform secret.
+
+**Free deploy path (2026-10-11): Hugging Face Space, Gradio SDK.** Fly requires a card on file
+and HF's Docker SDK needs a paid upgrade for this case, but the **Gradio SDK runs free on HF's
+CPU tier with no card**. `app.py` (repo root) is a Gradio UI over the *same* IRDAI-only pipeline
+(BM25 built at startup + Gemini), `requirements.txt` pins the runtime (no torch), and the Space
+front-matter is in `README.md`. The corpus boundary is then enforced by **git itself**: `git push`
+sends only committed files, and the four insurer wordings were never committed, so they cannot
+reach the Space — a stronger guarantee than the `.dockerignore` allowlist. The Dockerfile +
+`fly.toml`/`render.yaml` remain valid for a card-backed container deploy; the Gradio Space is the
+free default.
 
 ### `arag.local` — added 2026-10-01, and why it is a package rather than a module
 
