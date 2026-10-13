@@ -350,8 +350,12 @@ def _agent_engine() -> QueryEngine:
     retriever = LexicalRetriever(corpus.index, corpus.chunks)
     provider = GeminiProvider()
     log.info("agent_provider", configured=provider.configured, model=provider.model)
+    # top_k=10 (was 5): measured BM25 recall@k on the 20 labelled golden items rises from
+    # 0.425 @5 to 0.500 @10 (docs/RETRIEVAL_RECALL.md). BM25 is kept on the public instance
+    # (dense needs the embedding model at runtime, too heavy for the free tier); raising k is
+    # the free lever. Env-overridable for the eval, which sets its own k from thresholds.
     return GeneratingEngine(
-        retriever, provider, top_k=int(os.environ.get("ARAG_TOP_K", "5")), name="agent-irdai"
+        retriever, provider, top_k=int(os.environ.get("ARAG_TOP_K", "10")), name="agent-irdai"
     )
 
 

@@ -48,13 +48,37 @@ ENGINES: dict[str, type[QueryEngine]] = {
 # import-boundary test requires arag.eval to depend on protocols rather than
 # implementations, and a module-scope import here would break that for every command
 # including `validate`, which has no business touching a PDF.
-LAZY_ENGINES = ("bm25", "bm25-row-nl")
+#
+# ``dense`` loads the prebuilt markdown index (data/dense_v2.npz, bge-base-en-v1.5). It was
+# previously measured only by an uncommitted script; committing it here makes the dense
+# recall number (meanR@10=0.575 vs BM25 0.500 on the 20 labelled items,
+# docs/RETRIEVAL_RECALL.md) reproducible with one command.
+LAZY_ENGINES = ("bm25", "bm25-row-nl", "dense")
+DENSE_INDEX_PATH = Path("data/dense_v2.npz")
 
 
 def _build_lazy_engine(key: str, top_k: int) -> QueryEngine:
     from arag.agent.retrieval_only import RetrievalOnlyEngine
     from arag.config import REPO_ROOT
     from arag.index.build import build_corpus
+
+    if key == "dense":
+        from arag.index.dense import DenseIndex, SentenceTransformerEmbedder
+        from arag.retrieval.dense import DenseRetriever
+
+        # dense_v2.npz is the markdown-serialised corpus; build the matching chunk store so
+        # DenseRetriever's model_id/dim/query_prefix coverage checks pass.
+        corpus = build_corpus(
+            REPO_ROOT / "data" / "manifest" / "sources.jsonl",
+            REPO_ROOT / "data" / "raw",
+            serialisation="markdown",
+        )
+        index = DenseIndex.load(REPO_ROOT / DENSE_INDEX_PATH)
+        embedder = SentenceTransformerEmbedder(index.model_id)
+        log.info("corpus_built", serialisation="markdown", chunks=len(corpus.chunks), dense=True)
+        retriever = DenseRetriever(index, corpus.chunks, embedder)
+        return RetrievalOnlyEngine(retriever, top_k=top_k, name=key)
+
     from arag.retrieval.lexical import LexicalRetriever
 
     serialisation = "row_nl" if key.endswith("row-nl") else "markdown"
