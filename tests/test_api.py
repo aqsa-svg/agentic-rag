@@ -51,6 +51,17 @@ class TestLandingScope:
         assert '<form id="askform"' in html
         assert 'id="out" aria-live' in html
 
+    def test_ui_distinguishes_a_generation_error_from_an_abstention(
+        self, client: TestClient
+    ) -> None:
+        # a generation failure (generation_unavailable etc.) must render as an error, visibly
+        # distinct from a genuine refusal - not as "the documents do not cover this".
+        html = client.get("/").text
+        assert "ERROR_REASONS" in html
+        assert "generation_unavailable" in html  # classified as an error, not an abstention
+        assert "card error" in html  # a distinct card style
+        assert "Service error" in html
+
     def test_landing_carries_the_measured_abstention_caveat(self, client: TestClient) -> None:
         # a public URL must warn, next to the demo box: the measured failure (2/5 unanswerables
         # refused) is stated, the numbers are attributed to the local 1.5B, and the deployed

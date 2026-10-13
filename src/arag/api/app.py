@@ -99,6 +99,8 @@ _PAGE_CSS = (
     ".card.answered .label{color:var(--ok)}"
     ".card.declined{border-left:3px solid var(--muted);background:var(--panel)}"
     ".card.declined .label{color:var(--muted)}"
+    ".card.error{border-left:3px solid #b91c1c;background:#fef2f2}"
+    ".card.error .label{color:#b91c1c}"
     ".answer{font-size:1.05rem;margin:0;white-space:pre-wrap}"
     ".cites{list-style:none;margin:.85rem 0 0;padding:.65rem 0 0;border-top:1px solid var(--line)}"
     ".cites li{font:.85rem/1.6 var(--mono);color:var(--muted);padding:.05rem 0}"
@@ -130,14 +132,33 @@ function esc(s){
 document.querySelectorAll('.chip').forEach(function(b){
   b.addEventListener('click', function(){ qEl.value = b.getAttribute('data-q'); qEl.focus(); });
 });
+const ERROR_REASONS = [
+  'generation_unavailable', 'generation_not_configured', 'malformed_generation',
+  'service_degraded', 'generation_forbidden', 'generation_blocked'
+];
 function render(d){
   if (d.abstained){
+    const reason = d.abstain_reason || 'unknown';
+    if (ERROR_REASONS.indexOf(reason) >= 0){
+      // Not a refusal: generation failed. Shown as an error, visibly distinct from abstention.
+      out.innerHTML =
+        '<div class="card error"><span class="label">Service error &mdash; not an answer</span>'
+        + '<p class="answer">The service could not generate an answer. This is a <strong>failure, '
+        + 'not a decision</strong>: retrieval ran, but the generation call did not complete '
+        + '(<code>' + esc(reason) + '</code>). Try again shortly.</p></div>';
+      return;
+    }
+    let body;
+    if (reason === 'low_confidence'){
+      body = 'The system declined to answer rather than answer without support in the passages.';
+    } else {
+      body = 'The IRDAI Master Circular and its Annexure do not cover this question, '
+        + 'so the system declined rather than guess.';
+    }
     out.innerHTML =
       '<div class="card declined"><span class="label">No answer in these documents</span>'
-      + '<p class="answer">The IRDAI Master Circular and its Annexure do not cover this '
-      + 'question, so the system declined rather than guess.</p>'
-      + '<ul class="cites"><li>reason <span class="doc">'
-      + esc(d.abstain_reason || 'unknown') + '</span></li></ul></div>';
+      + '<p class="answer">' + body + '</p>'
+      + '<ul class="cites"><li>reason <span class="doc">' + esc(reason) + '</span></li></ul></div>';
     return;
   }
   let h = '<div class="card answered"><span class="label">Answered</span>'
