@@ -52,6 +52,106 @@ MAX_QUOTE_CHARS = 300
 RATE_LIMIT_REQUESTS = int(os.environ.get("ARAG_RATE_LIMIT", "20"))
 RATE_LIMIT_WINDOW_S = int(os.environ.get("ARAG_RATE_WINDOW_S", "60"))
 
+# The interactive browser UI, appended to the (f-string) landing head. Kept as a plain string so
+# the JavaScript braces are literal. No framework, no build step; it POSTs to the existing /ask.
+_Q_GRACE = "What is the grace period for paying premium in instalments?"
+_Q_FREELOOK = "What is the free-look period?"
+_Q_ROOMRENT = "What is the room rent sub-limit under the Star Comprehensive policy?"
+
+_ASK_UI = (
+    """<h2>Ask a question</h2>
+<p class="muted">Examples &mdash; click to fill the box:</p>
+<p>
+  <button class="exbtn" data-q=\""""
+    + _Q_GRACE
+    + """">Grace period (IRDAI answers this)</button>
+  <button class="exbtn" data-q=\""""
+    + _Q_FREELOOK
+    + """">Free-look period (IRDAI answers this)</button>
+  <button class="exbtn" data-q=\""""
+    + _Q_ROOMRENT
+    + """">Room-rent sub-limit (out of scope &rarr; should abstain)</button>
+</p>
+<textarea id="q" rows="2"
+  placeholder="Ask about the IRDAI Master Circular or its Annexure..."></textarea>
+<div><button id="ask" class="primary">Ask</button><span id="status"></span></div>
+<div id="out"></div>
+<p class="foot"><a href="/health">/health</a> &middot; <a href="/docs">/docs</a>
+  &middot; answers are generated; verify against the cited pages.</p>
+<script>
+const qEl = document.getElementById('q');
+const out = document.getElementById('out');
+const st = document.getElementById('status');
+const btn = document.getElementById('ask');
+function esc(s){
+  return (s == null ? '' : String(s))
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+document.querySelectorAll('.exbtn').forEach(function(b){
+  b.addEventListener('click', function(){ qEl.value = b.getAttribute('data-q'); qEl.focus(); });
+});
+function render(d){
+  if (d.abstained){
+    const reason = d.abstain_reason || 'unknown';
+    let why = 'The service did not produce a grounded answer.';
+    if (reason === 'low_confidence' || reason === 'no_candidates'){
+      why = 'The IRDAI documents do not support an answer'
+        + ' (for an out-of-scope question, that is the correct outcome).';
+    } else if (reason === 'generation_not_configured'){
+      why = 'Generation is not configured on this instance.';
+    } else if (reason === 'service_degraded' || reason === 'generation_unavailable'){
+      why = 'The generation service was unavailable for this request.';
+    }
+    out.innerHTML = '<div class="ans abstain"><strong>Abstained</strong> &mdash; reason <code>'
+      + esc(reason) + '</code>. ' + esc(why) + '</div>';
+    return;
+  }
+  let html = '<div class="ans"><p>' + esc(d.answer) + '</p>';
+  if (d.citations && d.citations.length){
+    html += '<p class="muted">Citations (document, page, clause &mdash; metadata only):</p><ul>';
+    d.citations.forEach(function(c){
+      html += '<li><code>' + esc(c.document_id) + '</code> p' + esc(c.page)
+        + (c.clause_id ? ' cl.' + esc(c.clause_id) : '') + '</li>';
+    });
+    html += '</ul>';
+  } else {
+    html += '<p class="muted">No citations returned.</p>';
+  }
+  html += '</div>';
+  out.innerHTML = html;
+}
+async function ask(){
+  const question = qEl.value.trim();
+  if (question.length < 3){
+    out.innerHTML = '<p class="muted">Enter a question (at least 3 characters).</p>';
+    return;
+  }
+  btn.disabled = true; st.textContent = ' thinking...'; out.innerHTML = '';
+  try {
+    const r = await fetch('/ask', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({question: question}),
+    });
+    if (r.status === 429){
+      out.innerHTML = '<p class="errmsg">Rate limit reached &mdash; wait a moment and retry.</p>';
+      return;
+    }
+    render(await r.json());
+  } catch (e){
+    out.innerHTML = '<p class="errmsg">Request failed: ' + esc(e) + '</p>';
+  } finally {
+    btn.disabled = false; st.textContent = '';
+  }
+}
+btn.addEventListener('click', ask);
+qEl.addEventListener('keydown', function(e){
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') ask();
+});
+</script>
+</body></html>"""
+)
+
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=2000)
@@ -181,8 +281,23 @@ def create_app() -> FastAPI:
             "code{background:#f4f4f5;padding:.1rem .3rem;border-radius:4px}"
             ".scope{background:#fff7ed;border:1px solid #fed7aa;padding:1rem;border-radius:8px}"
             ".warn{background:#fef2f2;border:1px solid #fecaca;padding:1rem;border-radius:8px}"
+            "textarea{width:100%;font:inherit;padding:.5rem;border:1px solid #d4d4d8;"
+            "border-radius:6px;box-sizing:border-box}"
+            "button{font:inherit;cursor:pointer;border:1px solid #d4d4d8;background:#fff;"
+            "padding:.4rem .7rem;border-radius:6px}"
+            "button:disabled{opacity:.5;cursor:default}"
+            ".primary{background:#111;color:#fff;border-color:#111;margin-top:.5rem}"
+            ".exbtn{margin:.15rem .25rem .15rem 0;font-size:14px}"
+            ".ans{background:#f0fdf4;border:1px solid #bbf7d0;padding:1rem;border-radius:8px;"
+            "margin-top:1rem}"
+            ".ans.abstain{background:#f4f4f5;border-color:#d4d4d8}"
+            ".muted{color:#71717a;font-size:14px;margin-bottom:.25rem}"
+            ".errmsg{color:#b91c1c}"
+            ".foot{color:#71717a;font-size:14px;margin-top:2rem}"
+            "#status{color:#71717a;font-size:14px;margin-left:.5rem}"
         )
-        return f"""<!doctype html><html><head><meta charset="utf-8">
+        return (
+            f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Agentic RAG — IRDAI regulation</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>{css}</style></head>
@@ -208,11 +323,9 @@ abstained). So it can still answer, with apparent confidence, a question it shou
 every answer as a <em>pipeline demonstration, not advice</em>, and verify it against the cited
 pages. The measurements are in the repo (<code>docs/AGENT_EVAL.md</code>) — documented, not
 hidden.</div>
-<h2>Ask</h2>
-<pre>curl -s -X POST "$URL/ask" -H 'content-type: application/json' \\
-  -d '{{"question":"What is the grace period for paying premium in instalments?"}}'</pre>
-<p><a href="/health">/health</a> · <a href="/docs">/docs</a></p>
-</body></html>"""
+"""
+            + _ASK_UI
+        )
 
     @app.get("/health")
     def health() -> dict[str, Any]:

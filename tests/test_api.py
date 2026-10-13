@@ -36,6 +36,18 @@ class TestLandingScope:
         assert "not served here" in html
         assert "copyrighted" in html
 
+    def test_landing_serves_an_interactive_ui_wired_to_ask(self, client: TestClient) -> None:
+        # the root is a usable browser UI, not just docs: an input, a submit button, example
+        # buttons, and vanilla JS that POSTs to the existing /ask (no new backend).
+        html = client.get("/").text
+        assert '<textarea id="q"' in html
+        assert 'id="ask"' in html
+        assert "fetch('/ask'" in html
+        assert 'class="exbtn"' in html
+        # the two example questions: one the IRDAI corpus answers, one it does not
+        assert 'data-q="What is the grace period' in html
+        assert "room rent sub-limit under the Star" in html
+
     def test_landing_carries_the_measured_abstention_caveat(self, client: TestClient) -> None:
         # a public URL must warn, next to the demo box: the measured failure (2/5 unanswerables
         # refused) is stated, the numbers are attributed to the local 1.5B, and the deployed
