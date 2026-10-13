@@ -62,60 +62,103 @@ _Q_GRACE = "What is the grace period for paying premium in instalments?"
 _Q_FREELOOK = "What is the free-look period?"
 _Q_ROOMRENT = "What is the room rent sub-limit under the Star Comprehensive policy?"
 
-# Austere look for a regulatory tool: one sans family + monospace for citations, a single
-# restrained accent, generous whitespace, visible focus. No framework, no build step. CSS and JS
-# are plain strings (braces stay literal); the HTML skeleton lives in landing(), which is where
+# The visual world is a statutory document, not an AI product. One idea carries it: an answer is
+# a short extract with its clause citation set in the margin beside it, the way a gazette prints
+# section numbers in the margin. Square corners, hairline rules, a serif for the document voice
+# (the answer and its citations), system sans for the interface chrome, a single oxblood accent
+# used only on the clause mark, the focus ring and the Ask button. No framework, no build step.
+# CSS and JS are plain strings (braces stay literal); the HTML skeleton lives in landing(), where
 # the only dynamic bits (engine name, generation status) are interpolated.
 _PAGE_CSS = (
-    ":root{--bg:#ffffff;--fg:#17191c;--muted:#6b7280;--line:#e5e7eb;--panel:#f6f7f9;"
-    "--accent:#1d4ed8;--ok:#15803d;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}"
+    "@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:"
+    "ital,wght@0,400;0,600;1,400&display=swap');"
+    ":root{--ink:#22201b;--paper:#f7f6f2;--rule:#cfccc2;--margin:#6b6760;"
+    "--seal:#7a1f2b;--seal-dark:#651826;--affirm:#3a5a40;"
+    "--serif:'Source Serif 4',Georgia,'Times New Roman',serif;"
+    "--sans:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;"
+    "--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}"
     "*{box-sizing:border-box}"
-    "body{margin:0;background:var(--bg);color:var(--fg);"
-    "font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}"
-    ".wrap{max-width:44rem;margin:0 auto;padding:2.75rem 1.25rem 4rem}"
-    "h1{font-size:1.3rem;font-weight:650;letter-spacing:-.01em;margin:0 0 .35rem}"
-    ".sub{color:var(--muted);margin:0 0 1.75rem}"
-    "textarea{width:100%;font:inherit;padding:.85rem 1rem;border:1px solid var(--line);"
-    "border-radius:10px;resize:vertical;min-height:3.1rem;background:var(--bg);color:inherit}"
-    "textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px;"
-    "border-color:var(--accent)}"
-    ".row{display:flex;align-items:center;gap:.75rem;margin-top:.75rem}"
-    "button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);"
-    "background:var(--bg);color:inherit;padding:.5rem .9rem}"
-    "button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
-    "#ask{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:550;"
-    "padding:.55rem 1.4rem}"
-    "#ask:disabled{opacity:.55;cursor:default}"
-    "#status{color:var(--muted);font-size:.9rem}"
-    ".examples{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.9rem}"
-    ".chip{font-size:.85rem;background:var(--panel);border:1px solid var(--line);color:inherit;"
-    "padding:.3rem .7rem;border-radius:999px}"
-    ".chip:hover{border-color:var(--accent);color:var(--accent)}"
-    "#out{margin-top:1.75rem}"
-    ".card{border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.25rem}"
-    ".card .label{display:block;font-size:.74rem;font-weight:650;letter-spacing:.05em;"
-    "text-transform:uppercase;margin-bottom:.55rem}"
-    ".card.answered{border-left:3px solid var(--ok)}"
-    ".card.answered .label{color:var(--ok)}"
-    ".card.declined{border-left:3px solid var(--muted);background:var(--panel)}"
-    ".card.declined .label{color:var(--muted)}"
-    ".card.error{border-left:3px solid #b91c1c;background:#fef2f2}"
-    ".card.error .label{color:#b91c1c}"
-    ".answer{font-size:1.05rem;margin:0;white-space:pre-wrap}"
-    ".cites{list-style:none;margin:.85rem 0 0;padding:.65rem 0 0;border-top:1px solid var(--line)}"
-    ".cites li{font:.85rem/1.6 var(--mono);color:var(--muted);padding:.05rem 0}"
-    ".cites .doc{color:var(--fg)}"
-    ".spin{display:inline-block;width:.85rem;height:.85rem;border:2px solid var(--line);"
-    "border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;"
-    "vertical-align:-1px;margin-right:.4rem}"
+    "body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 var(--sans);"
+    "-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}"
+    ".wrap{max-width:46rem;margin:0 auto;padding:3rem 1.25rem 4rem}"
+    "header{border-top:2px solid var(--ink);padding-top:.9rem;margin-bottom:2.25rem}"
+    ".docref{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;"
+    "font-size:.78rem;color:var(--margin);margin:0 0 .7rem}"
+    ".docref .sys{font-family:var(--serif);font-style:italic;color:var(--seal)}"
+    ".mast{font-family:var(--serif);font-size:1.6rem;font-weight:600;line-height:1.2;"
+    "letter-spacing:-.005em;margin:0}"
+    ".mast-rule{height:0;border-top:1px solid var(--rule);margin:.85rem 0 .7rem}"
+    ".mast-sub{color:var(--margin);font-size:.95rem;line-height:1.55;margin:0;max-width:36rem}"
+    ".qlabel{display:block;font-size:.8rem;font-weight:600;color:var(--margin);margin:0 0 .4rem}"
+    "textarea{width:100%;font:1.05rem/1.5 var(--serif);padding:.75rem .85rem;"
+    "border:1px solid var(--ink);border-radius:0;background:#fff;color:var(--ink);"
+    "resize:vertical;min-height:3rem}"
+    "textarea::placeholder{color:#9a968d;font-style:italic}"
+    "textarea:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{"
+    "outline:2px solid var(--seal);outline-offset:2px}"
+    ".row{display:flex;align-items:center;gap:1rem;margin-top:.85rem}"
+    "#ask{font:600 .95rem var(--sans);background:var(--seal);color:#fff;"
+    "border:1px solid var(--seal);border-radius:0;padding:.6rem 1.6rem;cursor:pointer}"
+    "#ask:hover{background:var(--seal-dark);border-color:var(--seal-dark)}"
+    "#ask:disabled{opacity:.5;cursor:default}"
+    "#status{color:var(--margin);font-size:.9rem}"
+    ".examples{margin-top:1rem;font-size:.9rem;color:var(--margin)}"
+    ".chip{font:inherit;background:none;border:0;color:var(--seal);cursor:pointer;padding:0;"
+    "border-bottom:1px solid var(--rule)}"
+    ".chip:hover{border-bottom-color:var(--seal)}"
+    ".examples .chip{margin-left:.9rem}"
+    ".demolink{margin-top:.75rem;font-size:.85rem}"
+    ".js-demo{font:inherit;background:none;border:0;color:var(--margin);cursor:pointer;padding:0;"
+    "text-decoration:underline;text-decoration-color:var(--rule)}"
+    ".js-demo:hover{color:var(--ink)}"
+    "#out{margin-top:2rem}"
+    ".banner{font:.82rem/1.5 var(--sans);color:var(--margin);background:#fff;"
+    "border:1px dashed var(--rule);padding:.55rem .7rem;margin:0 0 .85rem}"
+    ".banner strong{color:var(--seal);font-weight:600}"
+    ".extract{border:1px solid var(--ink);background:#fff}"
+    ".extract-body{display:grid;grid-template-columns:12rem 1fr}"
+    ".cite-margin{padding:1.1rem .95rem;border-right:1px solid var(--rule);align-self:start}"
+    ".cite-head{font:italic .8rem/1.3 var(--serif);color:var(--seal);margin:0 0 .65rem}"
+    ".cite{font-family:var(--serif);font-size:.86rem;line-height:1.4;margin:0 0 .75rem}"
+    ".cite:last-child{margin-bottom:0}"
+    ".cite .doc{display:block;color:var(--ink);font-weight:600;word-break:break-word}"
+    ".cite .loc{color:var(--margin)}"
+    ".extract-main{padding:1.1rem 1.2rem 1.25rem}"
+    ".answer{font-family:var(--serif);font-size:1.14rem;line-height:1.6;margin:0;"
+    "white-space:pre-wrap}"
+    ".note{border:1px solid var(--rule);background:#fbfbf8;padding:1.1rem 1.2rem}"
+    ".note .head{font:600 .85rem var(--sans);color:var(--margin);margin:0 0 .45rem}"
+    ".note .answer{font-size:1.05rem}"
+    ".reason{font-size:.82rem;color:var(--margin);margin:.7rem 0 0}"
+    ".card.error{border:1px solid var(--seal);border-left:4px solid var(--seal);"
+    "background:#fcf4f4;padding:1.1rem 1.2rem}"
+    ".card.error .head{font:600 .85rem var(--sans);color:var(--seal);margin:0 0 .45rem}"
+    ".card.error .answer{font-size:1.05rem}"
+    ".card.error .demo-hint{font-size:.85rem;color:var(--margin);margin:.7rem 0 0}"
+    "code{font:.85em var(--mono);background:var(--paper);border:1px solid var(--rule);"
+    "padding:.02rem .3rem}"
+    ".spin{display:inline-block;width:.8rem;height:.8rem;border:2px solid var(--rule);"
+    "border-top-color:var(--seal);border-radius:50%;vertical-align:-1px;margin-right:.45rem}"
+    "footer{margin-top:3.5rem;border-top:1px solid var(--rule);padding-top:1.25rem;"
+    "color:var(--margin);font-size:.9rem}"
+    "summary{cursor:pointer;color:var(--ink);font-weight:600}"
+    "details[open] summary{margin-bottom:.6rem}"
+    "footer p{max-width:42rem;line-height:1.6}"
+    "footer code{background:#fff}"
+    "footer a{color:var(--seal);text-decoration:none;border-bottom:1px solid var(--rule)}"
+    "footer a:hover{border-bottom-color:var(--seal)}"
+    "@media (max-width:34rem){"
+    ".extract-body{grid-template-columns:1fr}"
+    ".extract-main{order:1;padding-bottom:1rem}"
+    ".cite-margin{order:2;border-right:0;border-top:1px solid var(--rule);padding:.9rem 1.2rem}"
+    ".docref{flex-direction:column;gap:.15rem}.mast{font-size:1.4rem}"
+    "}"
+    "@media (prefers-reduced-motion:no-preference){"
+    ".reveal{animation:reveal .24s ease-out}"
+    "@keyframes reveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}"
+    ".spin{animation:spin .7s linear infinite}"
     "@keyframes spin{to{transform:rotate(360deg)}}"
-    "footer{margin-top:3rem;border-top:1px solid var(--line);padding-top:1.25rem;"
-    "color:var(--muted);font-size:.9rem}"
-    "summary{cursor:pointer;font-weight:550;color:var(--fg)}"
-    "details[open] summary{margin-bottom:.5rem}"
-    "footer code{font:.85em var(--mono);background:var(--panel);padding:.05rem .3rem;"
-    "border-radius:4px}"
-    "a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}"
+    "}"
 )
 
 # The client logic. Plain string so the JS braces are literal; appended after the HTML skeleton.
@@ -129,55 +172,89 @@ function esc(s){
   return (s == null ? '' : String(s))
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-document.querySelectorAll('.chip').forEach(function(b){
+document.querySelectorAll('.examples .chip').forEach(function(b){
   b.addEventListener('click', function(){ qEl.value = b.getAttribute('data-q'); qEl.focus(); });
 });
 const ERROR_REASONS = [
   'generation_unavailable', 'generation_not_configured', 'malformed_generation',
   'service_degraded', 'generation_forbidden', 'generation_blocked'
 ];
-function render(d){
+// A real grace-period answer this service produced on 13 Oct 2026 (probe (a), docs/AGENT_EVAL.md),
+// kept so the extract card is visible while live generation is on quota. Clearly labelled on show.
+const DEMO = {
+  abstained: false,
+  answer: 'The grace period for paying the premium is fifteen days where the premium is paid in '
+    + 'monthly instalments, and thirty days where it is paid quarterly, half-yearly or annually.',
+  citations: [{document_id: 'irdai-master-circular-2024', page: 7, clause_id: '8'}]
+};
+function citeLoc(c){
+  const parts = [];
+  if (c.clause_id != null && c.clause_id !== '') parts.push('Clause ' + esc(c.clause_id));
+  if (c.page != null) parts.push('p.' + esc(c.page));
+  return parts.join(' &middot; ');
+}
+function citesMargin(cites){
+  // Answer-level authority, stacked and top-aligned in the margin - NOT mapped to spans. The
+  // AnswerResult carries citations for the answer as a whole, so none is pinned to a line.
+  let h = '<div class="cite-margin"><p class="cite-head">&sect; Cited authority</p>';
+  if (cites && cites.length){
+    cites.forEach(function(c){
+      h += '<p class="cite"><span class="doc">' + esc(c.document_id) + '</span>'
+        + '<span class="loc">' + citeLoc(c) + '</span></p>';
+    });
+  } else {
+    h += '<p class="cite"><span class="loc">none cited</span></p>';
+  }
+  return h + '</div>';
+}
+function render(d, opts){
+  opts = opts || {};
+  const banner = opts.banner || '';
   if (d.abstained){
     const reason = d.abstain_reason || 'unknown';
     if (ERROR_REASONS.indexOf(reason) >= 0){
       // Not a refusal: generation failed. Shown as an error, visibly distinct from abstention.
       out.innerHTML =
-        '<div class="card error"><span class="label">Service error &mdash; not an answer</span>'
+        '<article class="card error reveal"><p class="head">Service error &mdash; not an answer</p>'
         + '<p class="answer">The service could not generate an answer. This is a <strong>failure, '
         + 'not a decision</strong>: retrieval ran, but the generation call did not complete '
-        + '(<code>' + esc(reason) + '</code>). Try again shortly.</p></div>';
+        + '(<code>' + esc(reason) + '</code>).</p>'
+        + '<p class="demo-hint">The live model may be on quota today. '
+        + '<button type="button" class="js-demo">See a saved example answer</button></p>'
+        + '</article>';
       return;
     }
-    let body;
+    let head, body;
     if (reason === 'low_confidence'){
+      head = 'Answer declined';
       body = 'The system declined to answer rather than answer without support in the passages.';
     } else {
+      head = 'No provision found';
       body = 'The IRDAI Master Circular and its Annexure do not cover this question, '
         + 'so the system declined rather than guess.';
     }
     out.innerHTML =
-      '<div class="card declined"><span class="label">No answer in these documents</span>'
+      '<article class="note reveal"><p class="head">' + head + '</p>'
       + '<p class="answer">' + body + '</p>'
-      + '<ul class="cites"><li>reason <span class="doc">' + esc(reason) + '</span></li></ul></div>';
+      + '<p class="reason">Reason: <code>' + esc(reason) + '</code></p></article>';
     return;
   }
-  let h = '<div class="card answered"><span class="label">Answered</span>'
-    + '<p class="answer">' + esc(d.answer) + '</p>';
-  if (d.citations && d.citations.length){
-    h += '<ul class="cites">';
-    d.citations.forEach(function(c){
-      h += '<li><span class="doc">' + esc(c.document_id) + '</span> &middot; p.' + esc(c.page)
-        + (c.clause_id ? ' &middot; cl. ' + esc(c.clause_id) : '') + '</li>';
-    });
-    h += '</ul>';
-  }
-  out.innerHTML = h + '</div>';
+  out.innerHTML = banner
+    + '<article class="extract reveal"><div class="extract-body">' + citesMargin(d.citations)
+    + '<div class="extract-main"><p class="answer">' + esc(d.answer) + '</p></div>'
+    + '</div></article>';
+}
+function showDemo(){
+  render(DEMO, {banner:
+    '<p class="banner"><strong>Saved example.</strong> The live model is on quota today; this is '
+    + 'a real grace-period answer this service produced on 13 Oct 2026, cited to the Master '
+    + 'Circular &mdash; shown so the answer card is visible.</p>'});
 }
 async function ask(){
   const question = qEl.value.trim();
   if (question.length < 3){ qEl.focus(); return; }
   btn.disabled = true;
-  st.innerHTML = '<span class="spin"></span>searching the documents...';
+  st.innerHTML = '<span class="spin"></span>searching the documents&hellip;';
   out.innerHTML = '';
   try {
     const r = await fetch('/ask', {
@@ -186,19 +263,23 @@ async function ask(){
       body: JSON.stringify({question: question}),
     });
     if (r.status === 429){
-      out.innerHTML = '<div class="card declined"><span class="label">Rate limited</span>'
-        + '<p class="answer">Too many requests - wait a moment and try again.</p></div>';
+      out.innerHTML = '<article class="note reveal"><p class="head">Rate limited</p>'
+        + '<p class="answer">Too many requests &mdash; wait a moment and try again.</p></article>';
       return;
     }
     render(await r.json());
   } catch (e){
-    out.innerHTML = '<div class="card declined"><span class="label">Error</span>'
-      + '<p class="answer">Request failed: ' + esc(e) + '</p></div>';
+    out.innerHTML = '<article class="note reveal"><p class="head">Request failed</p>'
+      + '<p class="answer">' + esc(e) + '</p></article>';
   } finally {
     btn.disabled = false; st.textContent = '';
   }
 }
 form.addEventListener('submit', function(e){ e.preventDefault(); ask(); });
+document.addEventListener('click', function(e){
+  const t = e.target.closest ? e.target.closest('.js-demo') : null;
+  if (t){ e.preventDefault(); showDemo(); }
+});
 </script>
 </body></html>"""
 
@@ -322,21 +403,30 @@ def create_app() -> FastAPI:
             f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>Agentic RAG — IRDAI regulation</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>{_PAGE_CSS}</style></head>
 <body><div class="wrap">
-<h1>Agentic RAG — IRDAI health-insurance regulation</h1>
-<p class="sub">Ask about the two public IRDAI 2024 documents — the Master Circular on Health
-Insurance Business and its Annexure.</p>
+<header>
+<p class="docref"><span>Insurance Regulatory and Development Authority of India
+&middot; 2024</span><span class="sys">Agentic RAG</span></p>
+<h1 class="mast">Health Insurance — Master Circular &amp; Annexure</h1>
+<div class="mast-rule"></div>
+<p class="mast-sub">A retrieval-augmented question system over the two public IRDAI 2024
+documents. Ask a question; an answer is returned as an extract with the clause it rests on.</p>
+</header>
 <form id="askform" autocomplete="off">
+<label class="qlabel" for="q">Your question</label>
 <textarea id="q" rows="2" aria-label="Your question"
   placeholder="e.g. What is the grace period for paying premium in instalments?"></textarea>
 <div class="row"><button id="ask" type="submit">Ask</button><span id="status"></span></div>
 </form>
-<div class="examples" aria-label="Example questions">
-<button type="button" class="chip" data-q="{_Q_GRACE}">Grace period</button>
-<button type="button" class="chip" data-q="{_Q_FREELOOK}">Free-look period</button>
-<button type="button" class="chip" data-q="{_Q_ROOMRENT}">Room-rent sub-limit</button>
+<div class="examples" aria-label="Example questions">Try:
+<button type="button" class="chip" data-q="{_Q_GRACE}">grace period</button>
+<button type="button" class="chip" data-q="{_Q_FREELOOK}">free-look period</button>
+<button type="button" class="chip" data-q="{_Q_ROOMRENT}">room-rent sub-limit</button>
 </div>
+<p class="demolink"><button type="button" class="js-demo">See a saved example answer</button></p>
 <section id="out" aria-live="polite"></section>
 <footer>
 <details><summary>Scope &amp; measured limitations</summary>
