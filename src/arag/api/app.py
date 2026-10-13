@@ -197,14 +197,17 @@ six-source corpus, and every measured result (retrieval, abstention, grounding) 
 not ship them. A live answer here demonstrates the pipeline over public regulation, not the
 measured system.</p>
 <p>Engine: <code>{engine.name}</code>. Generation {gen}.</p>
-<div class="warn"><strong>Measured limitation — read before trusting an answer.</strong> This runs
-a small instrument model and <strong>its abstention is unreliable</strong>: across three
-independent signals measured on the labelled set, none reliably told answerable from
-unanswerable, and on the 30-item eval the system correctly refused only <strong>2 of 5</strong>
-questions the documents do not address — it can answer, with apparent confidence, a question it
-should decline. Treat every answer as a <em>pipeline demonstration, not advice</em>, and verify
-it against the cited pages. The measurement behind this line is in the repo
-(<code>docs/AGENT_EVAL.md</code>), which is the point: the failure is documented, not hidden.</div>
+<div class="warn"><strong>Measured limitation — read before trusting an answer.</strong>
+<strong>Every measured number in this project comes from a local 1.5B instrument model, not from
+the model serving this page.</strong> On that labelled 30-item eval, abstention was unreliable —
+three independent signals each failed to tell answerable from unanswerable, and the system
+correctly refused only <strong>2 of 5</strong> questions the documents do not address. This
+instance generates with a hosted production model (Gemini), whose behaviour here is
+<strong>unmeasured</strong> beyond two probe questions (one answered, grounded; one correctly
+abstained). So it can still answer, with apparent confidence, a question it should decline. Treat
+every answer as a <em>pipeline demonstration, not advice</em>, and verify it against the cited
+pages. The measurements are in the repo (<code>docs/AGENT_EVAL.md</code>) — documented, not
+hidden.</div>
 <h2>Ask</h2>
 <pre>curl -s -X POST "$URL/ask" -H 'content-type: application/json' \\
   -d '{{"question":"What is the grace period for paying premium in instalments?"}}'</pre>

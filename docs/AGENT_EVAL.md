@@ -79,3 +79,23 @@ On the 1.5B instrument, the pipeline **answers 26/30 and grounds 7 of the 12 ans
 evidence was retrieved; it correctly abstains on only 2 of 5 unanswerable questions.** The two
 things the project set out to guarantee — ground the answer or refuse — are **not achieved by
 this instrument**, and whether a production generator achieves them is unmeasured.
+
+## Production-model probe (n=1, not a rate) — 2026-10-13
+
+The headline above is the 1.5B instrument. The live Render instance generates with
+`gemini-2.0-flash`, and two questions were run against it directly — enough to say something, not
+enough to measure a rate. This is **n=1 per item on the production model**, recorded as a measured
+observation, not a validated figure.
+
+| probe | question | result |
+|---|---|---|
+| (a) answerable | "grace period when premium is paid in instalments?" | **Answered, grounded** — "fifteen days (monthly) / thirty days (other)", cited to `irdai-master-circular-2024` p7 cl.8. `abstained=false`, generate ~3.2s. |
+| (b) out-of-scope | "room rent sub-limit under the Star Comprehensive policy?" | **Abstained** (`low_confidence`, the model declined) — the IRDAI corpus has no product sub-limits, so this is the honest outcome. generate ~1.7s. |
+
+**The abstention failure measured on the 1.5B did NOT reproduce on the stronger model for (b):**
+where the 1.5B answered 3 of 5 unanswerables at confidence 1.0, Gemini declined the one
+out-of-scope question it was shown. That is one data point, not a rate — it does not establish
+that Gemini abstains reliably, only that it did here. A validated production number would need the
+full 30-item set run through the hosted model, which is still unmeasured. Until then the landing
+page and the README state plainly that **every measured number is from the 1.5B instrument and the
+deployed model's behaviour is unmeasured beyond these two probes.**

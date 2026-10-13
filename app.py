@@ -48,13 +48,15 @@ wordings, the full six-source corpus, and every measured result are **local and 
 here** — the wordings are copyrighted. A live answer demonstrates the pipeline over public
 regulation, not the measured system.
 
-> **Measured limitation — read before trusting an answer.** This runs a small instrument model
-> and **its abstention is unreliable**: across three independent signals measured on the
-> labelled set, none reliably told answerable from unanswerable, and on the 30-item eval the
-> system correctly refused only **2 of 5** questions the documents do not address. It can
+> **Measured limitation — read before trusting an answer.** **Every measured number in this
+> project comes from a local 1.5B instrument model, not from the model serving this page.** On
+> that labelled 30-item eval, abstention was unreliable — three independent signals each failed
+> to tell answerable from unanswerable, and the system correctly refused only **2 of 5**
+> questions the documents do not address. This instance generates with a hosted production model
+> (Gemini), whose behaviour here is **unmeasured** beyond two probe questions. It can still
 > answer, with apparent confidence, a question it should decline. Treat every answer as a
-> *pipeline demonstration, not advice*, and verify it against the cited pages. The measurement
-> is in the repo (`docs/AGENT_EVAL.md`) — documented, not hidden.
+> *pipeline demonstration, not advice*, and verify it against the cited pages. The measurements
+> are in the repo (`docs/AGENT_EVAL.md`) — documented, not hidden.
 """
 
 

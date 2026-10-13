@@ -31,9 +31,11 @@ then deliberately dropped on measurement.
 > project). Read every figure as "what the pipeline does on this instrument," never as a quality
 > claim about the system a good model would make.
 
-**Live instance:** IRDAI-only public deploy — _set your URL after `fly deploy` (see
-[The public instance](#the-public-instance--irdai-only))_. Scope is deliberately narrow and
-stated on the landing page.
+**Live instance:** **https://agentic-rag-irdai.onrender.com** — the IRDAI-only service on Render
+(FastAPI + Docker, `gemini-2.0-flash`). Scope is deliberately narrow and stated on the landing
+page; generation is the production model, which is **unmeasured** (see the banner below). A Gradio
+Hugging Face Space (`app.py`) is also prepared for a free-CPU deploy. Render's free instance
+sleeps when idle, so the first request after a pause cold-starts (~30–60s).
 
 ---
 

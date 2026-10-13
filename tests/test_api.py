@@ -37,11 +37,13 @@ class TestLandingScope:
         assert "copyrighted" in html
 
     def test_landing_carries_the_measured_abstention_caveat(self, client: TestClient) -> None:
-        # a public URL must warn, next to the demo box, that abstention is unreliable - the
-        # measured failure (2/5 unanswerables refused) stated rather than hidden.
+        # a public URL must warn, next to the demo box: the measured failure (2/5 unanswerables
+        # refused) is stated, the numbers are attributed to the local 1.5B, and the deployed
+        # (production) model's behaviour is called unmeasured rather than implied good.
         html = client.get("/").text
-        assert "abstention is unreliable" in html
+        assert "local 1.5B instrument" in html
         assert "2 of 5" in html
+        assert "unmeasured" in html
         assert "not advice" in html
 
 

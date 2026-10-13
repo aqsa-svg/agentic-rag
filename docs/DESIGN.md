@@ -1581,6 +1581,27 @@ reach the Space — a stronger guarantee than the `.dockerignore` allowlist. The
 `fly.toml`/`render.yaml` remain valid for a card-backed container deploy; the Gradio Space is the
 free default.
 
+**What is actually deployed (2026-10-13), stated as it is — not as planned.** The live instance
+is the **Render FastAPI service** at `https://agentic-rag-irdai.onrender.com` (Docker, free plan),
+**not** the Gradio HF Space. The Space was pushed and its files are correct — the boundary was
+**verified in the deployed artifact via the HF API: `data/raw/` holds exactly the two IRDAI PDFs,
+no insurer wordings, no fixtures** — but it is stuck in `BUILD_ERROR` on `zero-a10g` (GPU)
+hardware that a free account cannot build (the base image force-installs torch), and switching it
+to `cpu-basic` is a Space-owner UI action the deploy token could not perform (403 on `/hardware`).
+So the honest record is: HF Space = prepared and boundary-verified, not running; Render = running.
+
+Getting Render to actually *answer* took two fixes the local 1.5B path never exercised, because
+generation had never once succeeded against a hosted model in this project (the §5.8 caveat, now
+with a fifth chapter): (1) the engine never disabled thinking, so a thinking model deliberated
+past the 30s request timeout — every `/ask` returned `service_degraded` with `generate_ms ~30000`
+until `thinking_budget=0` was set; (2) the default model had drifted to an unvalidated
+`gemini-3.6-flash` that returned transport/4xx failures, fixed to `gemini-2.0-flash` (matching
+§5.8's "Gemini 2.x Flash") and made env-overridable. **Production probe, n=1, not a rate:** on the
+live service `gemini-2.0-flash` answered the IRDAI grace-period question grounded to the master
+circular (p7), and **abstained** on the insurer-only room-rent question rather than fabricating a
+figure — so the abstention failure measured on the 1.5B did not reproduce on the stronger model
+for that one item. Recorded in `docs/AGENT_EVAL.md`.
+
 ### `arag.local` — added 2026-10-01, and why it is a package rather than a module
 
 A provider backed by `transformers` needed somewhere to live. It was first written into
