@@ -43,10 +43,13 @@ class TestLandingScope:
         assert '<textarea id="q"' in html
         assert 'id="ask"' in html
         assert "fetch('/ask'" in html
-        assert 'class="exbtn"' in html
-        # the two example questions: one the IRDAI corpus answers, one it does not
+        assert 'class="chip"' in html
+        # the example questions: ones the IRDAI corpus answers, and one it does not
         assert 'data-q="What is the grace period' in html
         assert "room rent sub-limit under the Star" in html
+        # the hero form submits in place (no reload) and the answer area is a live region
+        assert '<form id="askform"' in html
+        assert 'id="out" aria-live' in html
 
     def test_landing_carries_the_measured_abstention_caveat(self, client: TestClient) -> None:
         # a public URL must warn, next to the demo box: the measured failure (2/5 unanswerables

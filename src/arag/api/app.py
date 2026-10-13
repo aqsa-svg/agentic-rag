@@ -16,6 +16,12 @@ provider: with no ``ARAG_GEMINI_API_KEY`` it abstains ``generation_not_configure
 with a key it answers. The response always says which engine served it, so a live URL can
 never be mistaken for the full measured system.
 
+## The root is a real browser UI
+
+``GET /`` is a single HTML page (vanilla JS, no framework, no build step) whose hero is the
+question box; answers render in place against ``/ask``. The scope note and the measured-
+limitation caveat live in a collapsible footer, verbatim, out of the main flow.
+
 ## Discipline enforced here (not just documented)
 
 * No endpoint returns raw chunks or full documents — ``/ask`` returns an answer plus citation
@@ -52,81 +58,106 @@ MAX_QUOTE_CHARS = 300
 RATE_LIMIT_REQUESTS = int(os.environ.get("ARAG_RATE_LIMIT", "20"))
 RATE_LIMIT_WINDOW_S = int(os.environ.get("ARAG_RATE_WINDOW_S", "60"))
 
-# The interactive browser UI, appended to the (f-string) landing head. Kept as a plain string so
-# the JavaScript braces are literal. No framework, no build step; it POSTs to the existing /ask.
 _Q_GRACE = "What is the grace period for paying premium in instalments?"
 _Q_FREELOOK = "What is the free-look period?"
 _Q_ROOMRENT = "What is the room rent sub-limit under the Star Comprehensive policy?"
 
-_ASK_UI = (
-    """<h2>Ask a question</h2>
-<p class="muted">Examples &mdash; click to fill the box:</p>
-<p>
-  <button class="exbtn" data-q=\""""
-    + _Q_GRACE
-    + """">Grace period (IRDAI answers this)</button>
-  <button class="exbtn" data-q=\""""
-    + _Q_FREELOOK
-    + """">Free-look period (IRDAI answers this)</button>
-  <button class="exbtn" data-q=\""""
-    + _Q_ROOMRENT
-    + """">Room-rent sub-limit (out of scope &rarr; should abstain)</button>
-</p>
-<textarea id="q" rows="2"
-  placeholder="Ask about the IRDAI Master Circular or its Annexure..."></textarea>
-<div><button id="ask" class="primary">Ask</button><span id="status"></span></div>
-<div id="out"></div>
-<p class="foot"><a href="/health">/health</a> &middot; <a href="/docs">/docs</a>
-  &middot; answers are generated; verify against the cited pages.</p>
-<script>
+# Austere look for a regulatory tool: one sans family + monospace for citations, a single
+# restrained accent, generous whitespace, visible focus. No framework, no build step. CSS and JS
+# are plain strings (braces stay literal); the HTML skeleton lives in landing(), which is where
+# the only dynamic bits (engine name, generation status) are interpolated.
+_PAGE_CSS = (
+    ":root{--bg:#ffffff;--fg:#17191c;--muted:#6b7280;--line:#e5e7eb;--panel:#f6f7f9;"
+    "--accent:#1d4ed8;--ok:#15803d;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}"
+    "*{box-sizing:border-box}"
+    "body{margin:0;background:var(--bg);color:var(--fg);"
+    "font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}"
+    ".wrap{max-width:44rem;margin:0 auto;padding:2.75rem 1.25rem 4rem}"
+    "h1{font-size:1.3rem;font-weight:650;letter-spacing:-.01em;margin:0 0 .35rem}"
+    ".sub{color:var(--muted);margin:0 0 1.75rem}"
+    "textarea{width:100%;font:inherit;padding:.85rem 1rem;border:1px solid var(--line);"
+    "border-radius:10px;resize:vertical;min-height:3.1rem;background:var(--bg);color:inherit}"
+    "textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px;"
+    "border-color:var(--accent)}"
+    ".row{display:flex;align-items:center;gap:.75rem;margin-top:.75rem}"
+    "button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);"
+    "background:var(--bg);color:inherit;padding:.5rem .9rem}"
+    "button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
+    "#ask{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:550;"
+    "padding:.55rem 1.4rem}"
+    "#ask:disabled{opacity:.55;cursor:default}"
+    "#status{color:var(--muted);font-size:.9rem}"
+    ".examples{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.9rem}"
+    ".chip{font-size:.85rem;background:var(--panel);border:1px solid var(--line);color:inherit;"
+    "padding:.3rem .7rem;border-radius:999px}"
+    ".chip:hover{border-color:var(--accent);color:var(--accent)}"
+    "#out{margin-top:1.75rem}"
+    ".card{border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.25rem}"
+    ".card .label{display:block;font-size:.74rem;font-weight:650;letter-spacing:.05em;"
+    "text-transform:uppercase;margin-bottom:.55rem}"
+    ".card.answered{border-left:3px solid var(--ok)}"
+    ".card.answered .label{color:var(--ok)}"
+    ".card.declined{border-left:3px solid var(--muted);background:var(--panel)}"
+    ".card.declined .label{color:var(--muted)}"
+    ".answer{font-size:1.05rem;margin:0;white-space:pre-wrap}"
+    ".cites{list-style:none;margin:.85rem 0 0;padding:.65rem 0 0;border-top:1px solid var(--line)}"
+    ".cites li{font:.85rem/1.6 var(--mono);color:var(--muted);padding:.05rem 0}"
+    ".cites .doc{color:var(--fg)}"
+    ".spin{display:inline-block;width:.85rem;height:.85rem;border:2px solid var(--line);"
+    "border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;"
+    "vertical-align:-1px;margin-right:.4rem}"
+    "@keyframes spin{to{transform:rotate(360deg)}}"
+    "footer{margin-top:3rem;border-top:1px solid var(--line);padding-top:1.25rem;"
+    "color:var(--muted);font-size:.9rem}"
+    "summary{cursor:pointer;font-weight:550;color:var(--fg)}"
+    "details[open] summary{margin-bottom:.5rem}"
+    "footer code{font:.85em var(--mono);background:var(--panel);padding:.05rem .3rem;"
+    "border-radius:4px}"
+    "a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}"
+)
+
+# The client logic. Plain string so the JS braces are literal; appended after the HTML skeleton.
+_PAGE_JS = """<script>
 const qEl = document.getElementById('q');
 const out = document.getElementById('out');
 const st = document.getElementById('status');
 const btn = document.getElementById('ask');
+const form = document.getElementById('askform');
 function esc(s){
   return (s == null ? '' : String(s))
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-document.querySelectorAll('.exbtn').forEach(function(b){
+document.querySelectorAll('.chip').forEach(function(b){
   b.addEventListener('click', function(){ qEl.value = b.getAttribute('data-q'); qEl.focus(); });
 });
 function render(d){
   if (d.abstained){
-    const reason = d.abstain_reason || 'unknown';
-    let why = 'The service did not produce a grounded answer.';
-    if (reason === 'low_confidence' || reason === 'no_candidates'){
-      why = 'The IRDAI documents do not support an answer'
-        + ' (for an out-of-scope question, that is the correct outcome).';
-    } else if (reason === 'generation_not_configured'){
-      why = 'Generation is not configured on this instance.';
-    } else if (reason === 'service_degraded' || reason === 'generation_unavailable'){
-      why = 'The generation service was unavailable for this request.';
-    }
-    out.innerHTML = '<div class="ans abstain"><strong>Abstained</strong> &mdash; reason <code>'
-      + esc(reason) + '</code>. ' + esc(why) + '</div>';
+    out.innerHTML =
+      '<div class="card declined"><span class="label">No answer in these documents</span>'
+      + '<p class="answer">The IRDAI Master Circular and its Annexure do not cover this '
+      + 'question, so the system declined rather than guess.</p>'
+      + '<ul class="cites"><li>reason <span class="doc">'
+      + esc(d.abstain_reason || 'unknown') + '</span></li></ul></div>';
     return;
   }
-  let html = '<div class="ans"><p>' + esc(d.answer) + '</p>';
+  let h = '<div class="card answered"><span class="label">Answered</span>'
+    + '<p class="answer">' + esc(d.answer) + '</p>';
   if (d.citations && d.citations.length){
-    html += '<p class="muted">Citations (document, page, clause &mdash; metadata only):</p><ul>';
+    h += '<ul class="cites">';
     d.citations.forEach(function(c){
-      html += '<li><code>' + esc(c.document_id) + '</code> p' + esc(c.page)
-        + (c.clause_id ? ' cl.' + esc(c.clause_id) : '') + '</li>';
+      h += '<li><span class="doc">' + esc(c.document_id) + '</span> &middot; p.' + esc(c.page)
+        + (c.clause_id ? ' &middot; cl. ' + esc(c.clause_id) : '') + '</li>';
     });
-    html += '</ul>';
-  } else {
-    html += '<p class="muted">No citations returned.</p>';
+    h += '</ul>';
   }
-  html += '</div>';
-  out.innerHTML = html;
+  out.innerHTML = h + '</div>';
 }
 async function ask(){
   const question = qEl.value.trim();
-  if (question.length < 3){
-    out.innerHTML = '<p class="muted">Enter a question (at least 3 characters).</p>';
-    return;
-  }
-  btn.disabled = true; st.textContent = ' thinking...'; out.innerHTML = '';
+  if (question.length < 3){ qEl.focus(); return; }
+  btn.disabled = true;
+  st.innerHTML = '<span class="spin"></span>searching the documents...';
+  out.innerHTML = '';
   try {
     const r = await fetch('/ask', {
       method: 'POST',
@@ -134,23 +165,21 @@ async function ask(){
       body: JSON.stringify({question: question}),
     });
     if (r.status === 429){
-      out.innerHTML = '<p class="errmsg">Rate limit reached &mdash; wait a moment and retry.</p>';
+      out.innerHTML = '<div class="card declined"><span class="label">Rate limited</span>'
+        + '<p class="answer">Too many requests - wait a moment and try again.</p></div>';
       return;
     }
     render(await r.json());
   } catch (e){
-    out.innerHTML = '<p class="errmsg">Request failed: ' + esc(e) + '</p>';
+    out.innerHTML = '<div class="card declined"><span class="label">Error</span>'
+      + '<p class="answer">Request failed: ' + esc(e) + '</p></div>';
   } finally {
     btn.disabled = false; st.textContent = '';
   }
 }
-btn.addEventListener('click', ask);
-qEl.addEventListener('keydown', function(e){
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') ask();
-});
+form.addEventListener('submit', function(e){ e.preventDefault(); ask(); });
 </script>
 </body></html>"""
-)
 
 
 class AskRequest(BaseModel):
@@ -267,52 +296,36 @@ def create_app() -> FastAPI:
     @app.get("/", response_class=HTMLResponse)
     def landing() -> str:
         configured = os.environ.get("ARAG_GEMINI_API_KEY") is not None
-        gen = (
-            "configured"
-            if configured
-            else (
-                "<strong>not configured</strong> — the service abstains with reason "
-                "<code>generation_not_configured</code> until a key is set"
-            )
-        )
-        css = (
-            "body{font:16px/1.6 system-ui,sans-serif;max-width:46rem;margin:3rem auto;"
-            "padding:0 1rem;color:#111}"
-            "code{background:#f4f4f5;padding:.1rem .3rem;border-radius:4px}"
-            ".scope{background:#fff7ed;border:1px solid #fed7aa;padding:1rem;border-radius:8px}"
-            ".warn{background:#fef2f2;border:1px solid #fecaca;padding:1rem;border-radius:8px}"
-            "textarea{width:100%;font:inherit;padding:.5rem;border:1px solid #d4d4d8;"
-            "border-radius:6px;box-sizing:border-box}"
-            "button{font:inherit;cursor:pointer;border:1px solid #d4d4d8;background:#fff;"
-            "padding:.4rem .7rem;border-radius:6px}"
-            "button:disabled{opacity:.5;cursor:default}"
-            ".primary{background:#111;color:#fff;border-color:#111;margin-top:.5rem}"
-            ".exbtn{margin:.15rem .25rem .15rem 0;font-size:14px}"
-            ".ans{background:#f0fdf4;border:1px solid #bbf7d0;padding:1rem;border-radius:8px;"
-            "margin-top:1rem}"
-            ".ans.abstain{background:#f4f4f5;border-color:#d4d4d8}"
-            ".muted{color:#71717a;font-size:14px;margin-bottom:.25rem}"
-            ".errmsg{color:#b91c1c}"
-            ".foot{color:#71717a;font-size:14px;margin-top:2rem}"
-            "#status{color:#71717a;font-size:14px;margin-left:.5rem}"
-        )
+        gen = "configured" if configured else "not configured (set ARAG_GEMINI_API_KEY)"
         return (
-            f"""<!doctype html><html><head><meta charset="utf-8">
+            f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>Agentic RAG — IRDAI regulation</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>{css}</style></head>
-<body>
-<h1>Agentic RAG — Indian health-insurance regulation</h1>
-<p>Retrieval-augmented QA over the <strong>two public IRDAI 2024 documents</strong>: the Master
-Circular on Health Insurance Business and its Annexure.</p>
-<div class="scope"><strong>Scope, stated plainly.</strong> This public instance serves answers
+<style>{_PAGE_CSS}</style></head>
+<body><div class="wrap">
+<h1>Agentic RAG — IRDAI health-insurance regulation</h1>
+<p class="sub">Ask about the two public IRDAI 2024 documents — the Master Circular on Health
+Insurance Business and its Annexure.</p>
+<form id="askform" autocomplete="off">
+<textarea id="q" rows="2" aria-label="Your question"
+  placeholder="e.g. What is the grace period for paying premium in instalments?"></textarea>
+<div class="row"><button id="ask" type="submit">Ask</button><span id="status"></span></div>
+</form>
+<div class="examples" aria-label="Example questions">
+<button type="button" class="chip" data-q="{_Q_GRACE}">Grace period</button>
+<button type="button" class="chip" data-q="{_Q_FREELOOK}">Free-look period</button>
+<button type="button" class="chip" data-q="{_Q_ROOMRENT}">Room-rent sub-limit</button>
+</div>
+<section id="out" aria-live="polite"></section>
+<footer>
+<details><summary>Scope &amp; measured limitations</summary>
+<p><strong>Scope, stated plainly.</strong> This public instance serves answers
 over <em>public regulatory documents only</em>. The four insurer policy wordings, the full
 six-source corpus, and every measured result (retrieval, abstention, grounding) are
 <strong>local and not served here</strong> — the wordings are copyrighted and the project does
 not ship them. A live answer here demonstrates the pipeline over public regulation, not the
 measured system.</p>
-<p>Engine: <code>{engine.name}</code>. Generation {gen}.</p>
-<div class="warn"><strong>Measured limitation — read before trusting an answer.</strong>
+<p><strong>Measured limitation — read before trusting an answer.</strong>
 <strong>Every measured number in this project comes from a local 1.5B instrument model, not from
 the model serving this page.</strong> On that labelled 30-item eval, abstention was unreliable —
 three independent signals each failed to tell answerable from unanswerable, and the system
@@ -322,9 +335,14 @@ instance generates with a hosted production model (Gemini), whose behaviour here
 abstained). So it can still answer, with apparent confidence, a question it should decline. Treat
 every answer as a <em>pipeline demonstration, not advice</em>, and verify it against the cited
 pages. The measurements are in the repo (<code>docs/AGENT_EVAL.md</code>) — documented, not
-hidden.</div>
+hidden.</p>
+</details>
+<p>Engine <code>{engine.name}</code> · generation {gen} ·
+<a href="/health">/health</a> · <a href="/docs">/docs</a></p>
+</footer>
+</div>
 """
-            + _ASK_UI
+            + _PAGE_JS
         )
 
     @app.get("/health")
