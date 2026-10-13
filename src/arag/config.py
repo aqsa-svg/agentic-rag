@@ -94,7 +94,9 @@ class Settings(BaseSettings):
     contextualiser_model: str = "qwen2.5:7b-instruct"
 
     # --- online models ---
-    generator_model: str = "gemini-3.6-flash"
+    # gemini-2.0-flash matches DESIGN §5.8 ("Gemini 2.x Flash, free tier"); the code had drifted
+    # to an unvalidated gemini-3.6-flash that failed in production. Override via ARAG_GEMINI_MODEL.
+    generator_model: str = "gemini-2.0-flash"
     generator_price_key: str = "gemini-flash-free"
     embedding_model: str = "BAAI/bge-base-en-v1.5"
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"

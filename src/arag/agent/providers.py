@@ -43,14 +43,24 @@ class GeminiProvider:
 
     def __init__(
         self,
-        model: str = "gemini-3.6-flash",
+        model: str | None = None,
         *,
         api_key: str | None = None,
-        timeout_s: float = 30.0,
+        timeout_s: float | None = None,
     ) -> None:
-        self.model = model
+        # Model and timeout are env-overridable so a deploy can be retargeted without a code
+        # change. The default is "gemini-2.0-flash" to match DESIGN §5.8 ("Gemini 2.x Flash,
+        # free tier") - the code had drifted to an unvalidated "gemini-3.6-flash", which on the
+        # live Render deploy returned a transport/5xx failure (abstain_reason=service_degraded)
+        # on every call. A free AI-Studio key reliably reaches 2.x flash; set ARAG_GEMINI_MODEL
+        # to pick another (e.g. gemini-2.5-flash).
+        self.model = model or os.environ.get("ARAG_GEMINI_MODEL") or "gemini-2.0-flash"
         self._api_key = api_key or os.environ.get("ARAG_GEMINI_API_KEY") or None
-        self._timeout_s = timeout_s
+        self._timeout_s = (
+            timeout_s
+            if timeout_s is not None
+            else float(os.environ.get("ARAG_GEMINI_TIMEOUT_S", "30"))
+        )
 
     @property
     def configured(self) -> bool:
