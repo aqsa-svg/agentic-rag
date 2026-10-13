@@ -1,17 +1,3 @@
----
-title: Agentic RAG IRDAI
-emoji: 📄
-colorFrom: blue
-colorTo: gray
-sdk: gradio
-app_file: app.py
-pinned: false
----
-
-<!-- The YAML above is the Hugging Face Space config (Gradio SDK, free CPU), and it also lets
-     this repo be pushed to a Space as-is; app.py is the entrypoint. GitHub renders it as a
-     small table. Everything below is the project write-up. -->
-
 # agentic-rag — retrieval-augmented QA over Indian health-insurance policy wordings
 
 A question-answering system over six real insurance documents — two versions of a Star Health
@@ -182,8 +168,11 @@ a claim until both sides are read verbatim — are the actual product.
 ## Architecture
 
 ```
-ingest → chunk → index ──┬── BM25 (lexical)      ──┐
-                         └── dense (bge, exact)  ──┴── RRF fusion → generate → VERIFY → answer | abstain
+ingest → chunk → index → retrieve → generate → VERIFY → answer | abstain
+                            │
+                            ├─ BM25 (lexical) — the deployed path
+                            └─ dense (bge, exact) — strongest measured retriever
+                               (RRF hybrid was built and measured, then dropped: it loses to dense)
 ```
 
 Three boundaries are enforced by AST-walking tests, not convention:
@@ -219,11 +208,14 @@ generation is the hosted Gemini API. With no `ARAG_GEMINI_API_KEY` the service a
 raw chunks or full documents**; quotes are capped; a per-client rate limit applies.
 
 ```bash
-# verified reachable locally under uvicorn; one authenticated command takes it public
-fly launch --no-deploy --copy-config          # edit app name in fly.toml
-fly secrets set ARAG_GEMINI_API_KEY=<key>     # without it, the service abstains, honestly
-fly deploy                                     # -> https://<app>.fly.dev   (or: Render Blueprint via render.yaml)
+# Live on Render (Docker + FastAPI, render.yaml Blueprint) — the running instance:
+#   push to GitHub, then on Render: New > Blueprint > point at the repo (render.yaml);
+#   set ARAG_GEMINI_API_KEY in the service environment (without it the service abstains,
+#   honestly).  ->  https://agentic-rag-irdai.onrender.com
+# Fly is an alternative (fly.toml is kept, never deployed):
+#   fly launch --no-deploy --copy-config && fly secrets set ARAG_GEMINI_API_KEY=<key> && fly deploy
 
+URL=https://agentic-rag-irdai.onrender.com
 curl -s -X POST "$URL/ask" -H 'content-type: application/json' \
   -d '{"question":"What is the grace period for paying premium in instalments?"}'
 ```
@@ -256,7 +248,7 @@ arag-ingest fetch       # the 4 insurer wordings (never committed — copyrighte
 arag-ingest clause-index
 arag-eval validate      # schema + corpus resolution + composition
 arag-eval run --engine bm25
-make test               # 660 tests
+make test               # 663 tests
 ```
 
 Generation needs `ARAG_GEMINI_API_KEY` (note the `ARAG_` prefix; the bare vendor name is read by
