@@ -363,6 +363,13 @@ class GeneratingEngine:
             system=SYSTEM_PROMPT,
             user=build_prompt(question, candidates),
             response_mime_type="application/json",
+            # Disable thinking. This is a structured-JSON task that needs no deliberation, and
+            # on a THINKING model (e.g. gemini-3.x flash) leaving it on makes the model reason
+            # before emitting the JSON and blow the request timeout - observed in production on
+            # the Render deploy: every /ask returned abstain_reason=service_degraded with
+            # generate_ms ~30000 (a transport read-timeout), never a token. llm.py documents 0
+            # as the fix for exactly this; a non-thinking model ignores the field.
+            thinking_budget=0,
         )
         last_text = ""
         for attempt in range(MAX_REPAIR_ATTEMPTS + 1):
@@ -398,6 +405,7 @@ class GeneratingEngine:
                         f"{response.text[:500]}\n\nReply with JSON only."
                     ),
                     response_mime_type=request.response_mime_type,
+                    thinking_budget=0,
                 )
                 continue
             if not isinstance(parsed, dict):
