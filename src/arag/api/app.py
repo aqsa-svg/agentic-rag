@@ -462,10 +462,14 @@ hidden.</p>
 
     @app.get("/health")
     def health() -> dict[str, Any]:
+        # The generator model is reported so a live instance says which model it will call -
+        # the one fact that distinguishes "redeploy not landed" from "this model 404s" when
+        # /ask returns generation_unavailable. Stub engines have no provider, hence getattr.
         return {
             "status": "ok",
             "uptime_s": round(time.time() - STARTED_AT, 1),
             "engine": engine.name,
+            "generator_model": getattr(getattr(engine, "_provider", None), "model", None),
         }
 
     @app.post("/ask", response_model=AskResponse)
