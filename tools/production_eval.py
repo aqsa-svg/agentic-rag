@@ -89,10 +89,11 @@ def _build_engine(retriever: str, top_k: int):
             note="ARAG_GEMINI_API_KEY is unset; every item will abstain "
             "generation_not_configured. This proves the harness runs; it is not a real eval.",
         )
-    return GeneratingEngine(inner, provider, top_k=top_k, name=f"gemini-{retriever}")
+    engine = GeneratingEngine(inner, provider, top_k=top_k, name=f"gemini-{retriever}")
+    return engine, provider.model
 
 
-def _record(ir) -> dict:
+def _record(ir, model: str) -> dict:
     item, r, b, ret = ir.item, ir.result, ir.behaviour, ir.retrieval
     cites = []
     reason = None
@@ -104,6 +105,7 @@ def _record(ir) -> dict:
         reason = r.abstain_reason.value if r.abstain_reason else None
     return {
         "id": item.id,
+        "model": model,
         "strata": item.strata.value,
         "expected_behaviour": item.expected_behaviour.value,
         "has_span": bool(item.ground_truth_spans),
@@ -160,11 +162,13 @@ def _summary(records: list[dict]) -> str:
     )
     cost = sum(r["marginal_usd"] for r in records)
 
+    models = sorted({r.get("model") for r in records if r.get("model")})
     lines = [
         "",
         "=" * 64,
         f"PRODUCTION EVAL SUMMARY  (n={n})",
         "=" * 64,
+        f"  model(s)                     : {', '.join(models) or 'unknown'}",
         f"  answered / abstained         : {len(answered)} / {len(abstained)}",
         f"  generation errors (not refusal): {len(errored)}"
         + (f"  {sorted(r['id'] for r in errored)}" if errored else ""),
@@ -197,13 +201,14 @@ async def _run(args: argparse.Namespace) -> int:
         print(_summary(list(done.values())))
         return 0
 
-    engine = _build_engine(args.retriever, args.top_k)
+    engine, model = _build_engine(args.retriever, args.top_k)
+    print(f"model={model}  retriever={args.retriever}  top_k={args.top_k}")
 
     with out.open("a", encoding="utf-8") as fh:
         for i, item in enumerate(remaining, 1):
             started = time.perf_counter()
             ir = await _run_item(item, engine, k=k, matcher=matcher)
-            rec = _record(ir)
+            rec = _record(ir, model)
             done[item.id] = rec
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
             fh.flush()

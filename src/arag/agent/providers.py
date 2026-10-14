@@ -49,12 +49,20 @@ class GeminiProvider:
         timeout_s: float | None = None,
     ) -> None:
         # Model and timeout are env-overridable so a deploy can be retargeted without a code
-        # change. The default is "gemini-2.0-flash" to match DESIGN §5.8 ("Gemini 2.x Flash,
-        # free tier") - the code had drifted to an unvalidated "gemini-3.6-flash", which on the
-        # live Render deploy returned a transport/5xx failure (abstain_reason=service_degraded)
-        # on every call. A free AI-Studio key reliably reaches 2.x flash; set ARAG_GEMINI_MODEL
-        # to pick another (e.g. gemini-2.5-flash).
-        self.model = model or os.environ.get("ARAG_GEMINI_MODEL") or "gemini-2.0-flash"
+        # change. The default is "gemini-3.6-flash": the previous default "gemini-2.0-flash"
+        # (DESIGN §5.8) was RETIRED by Google (announced 2026-02-18, shutdown from 2026-06-01;
+        # it answered a probe on 2026-10-13 and 404'd on 2026-10-14), and a 404 on a pinned
+        # model maps UNKNOWN -> generation_unavailable, which reads like a quota failure but is
+        # not. gemini-3.6-flash is the deprecations page's named successor and serves on the
+        # same generateContent endpoint. Both env names are honoured: ARAG_GEMINI_MODEL (this
+        # provider's own knob) and ARAG_GENERATOR_MODEL (config.generator_model, what
+        # .env.example documents) - they were two disconnected knobs before.
+        self.model = (
+            model
+            or os.environ.get("ARAG_GEMINI_MODEL")
+            or os.environ.get("ARAG_GENERATOR_MODEL")
+            or "gemini-3.6-flash"
+        )
         self._api_key = api_key or os.environ.get("ARAG_GEMINI_API_KEY") or None
         self._timeout_s = (
             timeout_s
@@ -130,6 +138,18 @@ class GeminiProvider:
                 f"by waiting or retrying. Check console.cloud.google.com for the project. "
                 f"{redact(response.text)[:200]}",
                 retryable=False,
+            )
+        if response.status_code == 404:
+            # Almost always a retired or mistyped model name (Gemini flash IDs churn fast:
+            # 2.0 -> 3.6 -> 3.8 within 2026). The body says "models/<id> is not found ...",
+            # which otherwise disappears into a generic generation_unavailable that reads like
+            # a quota problem. Name the model and the knob so the next reader fixes the right
+            # thing. Not retryable - waiting does not bring a retired model back.
+            raise LLMError(
+                LLMErrorKind.UNKNOWN,
+                f"gemini HTTP 404 for model {self.model!r} - it is not found for generateContent "
+                f"(usually a RETIRED or mistyped model). Set ARAG_GEMINI_MODEL to a current one "
+                f"(see ai.google.dev/gemini-api/docs/deprecations). {redact(response.text)[:200]}",
             )
         if response.status_code >= 400:
             # 5xx is upstream trouble and retryable - 503 "high demand" is the one this

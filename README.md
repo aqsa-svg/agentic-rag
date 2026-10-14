@@ -18,7 +18,7 @@ then deliberately dropped on measurement.
 > claim about the system a good model would make.
 
 **Live instance:** **https://agentic-rag-irdai.onrender.com** — the IRDAI-only service on Render
-(FastAPI + Docker, `gemini-2.0-flash`). Scope is deliberately narrow and stated on the landing
+(FastAPI + Docker, `gemini-3.6-flash`). Scope is deliberately narrow and stated on the landing
 page; generation is the production model, which is **unmeasured** (see the banner below). Render's
 free instance sleeps when idle, so the first request after a pause cold-starts (~30–60s).
 

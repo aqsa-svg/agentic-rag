@@ -82,15 +82,22 @@ this instrument**, and whether a production generator achieves them is unmeasure
 
 ## Production-model probe (n=1, not a rate) — 2026-10-13
 
-The headline above is the 1.5B instrument. The live Render instance generates with
-`gemini-2.0-flash`, and two questions were run against it directly — enough to say something, not
-enough to measure a rate. This is **n=1 per item on the production model**, recorded as a measured
+The headline above is the 1.5B instrument. The two probes below were both served by
+**`gemini-2.0-flash`** (the live Render default at the time) — enough to say something, not enough
+to measure a rate. This is **n=1 per item on the production model**, recorded as a measured
 observation, not a validated figure.
 
-| probe | question | result |
-|---|---|---|
-| (a) answerable | "grace period when premium is paid in instalments?" | **Answered, grounded** — "fifteen days (monthly) / thirty days (other)", cited to `irdai-master-circular-2024` p7 cl.8. `abstained=false`, generate ~3.2s. |
-| (b) out-of-scope | "room rent sub-limit under the Star Comprehensive policy?" | **Abstained** (`low_confidence`, the model declined) — the IRDAI corpus has no product sub-limits, so this is the honest outcome. generate ~1.7s. |
+> **Model provenance — which instrument served which run.** Both probes (a) and (b) ran on
+> `gemini-2.0-flash`. That model was **retired by Google** (announced 2026-02-18, shutdown from
+> 2026-06-01): it answered probe (a) on 2026-10-13 and returned HTTP 404 → `generation_unavailable`
+> on 2026-10-14, so the live default was moved to **`gemini-3.6-flash`** (its named successor). A
+> run on `gemini-3.6-flash` is a **different instrument** and must not be read as the same
+> measurement as these two probes — any future production number must state its model.
+
+| probe | model | question | result |
+|---|---|---|---|
+| (a) answerable | `gemini-2.0-flash` | "grace period when premium is paid in instalments?" | **Answered, grounded** — "fifteen days (monthly) / thirty days (other)", cited to `irdai-master-circular-2024` p7 cl.8. `abstained=false`, generate ~3.2s. |
+| (b) out-of-scope | `gemini-2.0-flash` | "room rent sub-limit under the Star Comprehensive policy?" | **Abstained** (`low_confidence`, the model declined) — the IRDAI corpus has no product sub-limits, so this is the honest outcome. generate ~1.7s. |
 
 **The abstention failure measured on the 1.5B did NOT reproduce on the stronger model for (b):**
 where the 1.5B answered 3 of 5 unanswerables at confidence 1.0, Gemini declined the one

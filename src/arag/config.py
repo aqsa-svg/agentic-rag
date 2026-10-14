@@ -94,9 +94,11 @@ class Settings(BaseSettings):
     contextualiser_model: str = "qwen2.5:7b-instruct"
 
     # --- online models ---
-    # gemini-2.0-flash matches DESIGN §5.8 ("Gemini 2.x Flash, free tier"); the code had drifted
-    # to an unvalidated gemini-3.6-flash that failed in production. Override via ARAG_GEMINI_MODEL.
-    generator_model: str = "gemini-2.0-flash"
+    # gemini-2.0-flash (DESIGN §5.8) was RETIRED by Google (shutdown from 2026-06-01); it 404'd
+    # in production on 2026-10-14. gemini-3.6-flash is the deprecations page's named successor on
+    # the same generateContent endpoint. Override via ARAG_GENERATOR_MODEL or ARAG_GEMINI_MODEL
+    # (the GeminiProvider honours both). See docs/AGENT_EVAL.md for which model served which probe.
+    generator_model: str = "gemini-3.6-flash"
     generator_price_key: str = "gemini-flash-free"
     embedding_model: str = "BAAI/bge-base-en-v1.5"
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
